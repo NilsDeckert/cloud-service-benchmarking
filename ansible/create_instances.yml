@@ -1,0 +1,41 @@
+##############
+# Create GCP instances to host the SUTs and benchmarking software
+# 
+# Related: https://developers.redhat.com/articles/2023/07/12/how-create-instance-gcp-using-ansible-cli#how_to_use_ansible_cli
+##############
+
+- name: Create GCP instances
+  hosts: localhost
+  gather_facts: false
+  vars:
+    project: "ace-wording-477310-h0"
+    machine_type: "c3-standard-4" # TODO
+    source_image: "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts"
+    zone: "europe-west9-b"
+
+  tasks:
+    - name: Create instance
+      google.cloud.gcp_compute_instance:
+        name: "my-test-instance"
+        machine_type: "{{ machine_type }}"
+        disks:
+          - auto_delete: true
+            boot: true
+            initialize_params:
+              source_image: "{{ source_image }}"
+        network_interfaces:
+          - network:
+              name: "default"
+            access_configs:
+              - name: External NAT
+                type: ONE_TO_ONE_NAT
+        zone: "{{ zone }}"
+        auth_kind: "serviceaccount"
+        project: "{{ project }}"
+        service_account_contents: "{{ gcp_service_account }}"
+        state: "present"
+      register: instance_data
+
+    - name: Print details
+      debug:
+        msg: "Instance '{{ instance_data.name }}' created with IP {{ instance_data.networkInterfaces[0].accessConfigs[0].natIP }}"
