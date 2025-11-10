@@ -38,3 +38,15 @@ To create the required gcp instances, run the following command:
 ```bash
 ansible-playbook --ask-vault-pass create_instance.yml
 ```
+
+To configure them, run:
+
+```bash
+ansible-playbook configure_instances.yml -i inventory_gcp_compute.yml --ask-vault-pass
+```
+
+Finally, you can stop all instances:
+
+```bash
+ansible-playbook stop_instances.yml --ask-vault-pass
+```
