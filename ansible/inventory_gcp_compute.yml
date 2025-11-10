@@ -6,9 +6,13 @@ projects:
 auth_kind: serviceaccount
 filters:
   - status = RUNNING
-hostname_variable: name
+hostnames:
+  - name
 compose:
-  ansible_host: networkInterfaces[0].networkIP
+  ansible_host: networkInterfaces[0].accessConfigs[0].natIP
+keyed_groups:
+  - key: labels
+    prefix: label
 # Use ansible-vault encrypt_string for this:
 service_account_contents: !vault |
           $ANSIBLE_VAULT;1.1;AES256
