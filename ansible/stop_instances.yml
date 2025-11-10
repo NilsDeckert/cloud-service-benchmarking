@@ -1,0 +1,9 @@
+---
+- name: Stop all running GCP instances in a zone
+  hosts: localhost
+  gather_facts: false
+  vars:
+    gcp_project: "ace-wording-477310-h0"
+    gcp_zone: "europe-west9-b"
+  roles:
+    - role: gcp_stop_vms

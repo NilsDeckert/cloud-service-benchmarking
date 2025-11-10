@@ -1,0 +1,31 @@
+---
+- name: List all running instances in zone '{{ gcp_zone }}'
+  google.cloud.gcp_compute_instance_info:
+    project: "{{ gcp_project }}"
+    zone: "{{ gcp_zone }}"
+    filters:
+      - "status = RUNNING" # This efficiently filters for running VMs only
+    auth_kind: "serviceaccount"
+    service_account_contents: "{{ gcp_service_account }}"
+  register: running_instances_info
+
+- name: Stop running instances
+  google.cloud.gcp_compute_instance:
+    name: "{{ item.name }}"
+    state: present # Can also be absent to delete instance
+    status: TERMINATED
+    project: "{{ gcp_project }}"
+    zone: "{{ gcp_zone }}"
+    auth_kind: "serviceaccount"
+    service_account_contents: "{{ gcp_service_account }}"
+  loop: "{{ running_instances_info.resources }}"
+  loop_control:
+    label: "{{ item.name }}" # For clean log output
+  when: running_instances_info.resources | length > 0
+  async: 60
+  poll: 0
+
+- name: Report no running instances
+  debug:
+    msg: "No running instances found in zone {{ gcp_zone }}."
+  when: running_instances_info.resources | length == 0

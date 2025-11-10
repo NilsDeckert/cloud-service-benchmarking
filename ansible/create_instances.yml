@@ -12,11 +12,16 @@
     machine_type: "c3-standard-4" # TODO
     source_image: "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts"
     zone: "europe-west9-b"
+    machines:
+      - "Redis"
+      - "Valkey"
+      - "KeyDB"
+      - "Acdis"
 
   tasks:
     - name: Create instance
       google.cloud.gcp_compute_instance:
-        name: "my-test-instance"
+        name: "{{ item | lower }}"
         machine_type: "{{ machine_type }}"
         disks:
           - auto_delete: true
@@ -34,8 +39,21 @@
         project: "{{ project }}"
         service_account_contents: "{{ gcp_service_account }}"
         state: "present"
+        status: RUNNING
+      loop: "{{ machines }}"
       register: instance_data
 
     - name: Print details
       debug:
-        msg: "Instance '{{ instance_data.name }}' created with IP {{ instance_data.networkInterfaces[0].accessConfigs[0].natIP }}"
+        msg: "Instance '{{ item.name }}' created with IP {{ item.networkInterfaces[0].accessConfigs[0].natIP | default('???') }}"
+      loop: "{{ instance_data.results }}"
+      loop_control: { label: "{{ item.name | default('SKIPPED') }}" }
+      when: not item.failed # Only print for successful items
+
+    - name: Report failures
+      debug:
+        msg: "FAILED to create instance '{{ item.item }}'. Error: {{ item.msg | default(item.body.error.message) }}"
+      loop: "{{ instance_data.results }}"
+      when: item.failed # Only print for failed items
+      loop_control:
+        label: "{{ item.item | default('FAILED ITEM') }}"
