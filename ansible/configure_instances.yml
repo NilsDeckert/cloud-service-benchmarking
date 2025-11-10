@@ -1,0 +1,12 @@
+- name: Configure redis node
+  hosts: redis
+  become: yes
+  tasks:
+    - name: Import redis tasks
+      ansible.builtin.import_tasks: ./tasks/install_redis.yml
+- name: 
+  hosts: keydb
+  become: yes
+  tasks:
+    - name: Import keydb tasks
+      ansible.builtin.import_tasks: ./tasks/install_keydb.yml

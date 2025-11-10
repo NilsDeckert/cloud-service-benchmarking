@@ -1,14 +1,15 @@
 ---
-- name: Add keydb apt repository
-  ansible.builtin.apt_repository:
-    repo: deb https://download.keydb.dev/open-source-dist jammy main
-    state: present
-    filename: keydb
-
-- name: Add key to trusted
+- name: Add KeyDB GPG key
   ansible.builtin.get_url:
     url: https://download.keydb.dev/open-source-dist/keyring.gpg
     dest: /etc/apt/trusted.gpg.d/keydb.gpg
+    mode: '0644'
+
+- name: Add keydb apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://download.keydb.dev/open-source-dist {{ ansible_lsb.codename }} main"
+    state: present
+    filename: keydb
 
 - name: Install keydb
   ansible.builtin.apt:
