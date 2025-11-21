@@ -15,3 +15,18 @@
   ansible.builtin.apt:
     name: keydb
     update_cache: yes
+
+# --- Configuration for External Access ---
+- name: Allow external connections (bind 0.0.0.0)
+  ansible.builtin.lineinfile:
+    path: /etc/keydb/keydb.conf
+    regexp: '^bind '
+    line: 'bind 0.0.0.0'
+  notify: Restart keydb
+
+- name: Disable protected mode
+  ansible.builtin.lineinfile:
+    path: /etc/keydb/keydb.conf
+    regexp: '^protected-mode '
+    line: 'protected-mode no'
+  notify: Restart keydb

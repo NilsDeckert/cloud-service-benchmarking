@@ -15,3 +15,8 @@
   tasks:
     - name: Import keydb tasks
       ansible.builtin.import_tasks: ./tasks/install_keydb.yml
+  handlers:
+    - name: Restart keydb
+      ansible.builtin.service:
+        name: keydb-server
+        state: restarted
