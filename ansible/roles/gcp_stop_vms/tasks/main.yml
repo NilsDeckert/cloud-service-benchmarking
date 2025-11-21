@@ -12,7 +12,7 @@
 - name: Stop running instances
   google.cloud.gcp_compute_instance:
     name: "{{ item.name }}"
-    state: present # Can also be absent to delete instance
+    state: absent # Can also be absent to delete instance
     status: TERMINATED
     project: "{{ gcp_project }}"
     zone: "{{ gcp_zone }}"

@@ -4,6 +4,11 @@
   tasks:
     - name: Import redis tasks
       ansible.builtin.import_tasks: ./tasks/install_redis.yml
+  handlers:
+    - name: Restart redis
+      ansible.builtin.service:
+        name: redis-server
+        state: restarted
 - name: 
   hosts: keydb
   become: yes

@@ -9,14 +9,14 @@
   gather_facts: false
   vars:
     project: "ace-wording-477310-h0"
-    machine_type: "c3-standard-4" # TODO
+    machine_type: "e2-micro" # TODO
     source_image: "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts"
     zone: "europe-west9-b"
     machines:
       - "Redis"
-      - "Valkey"
       - "KeyDB"
-      - "Acdis"
+      # - "Valkey"
+      # - "Acdis"
 
   tasks:
     - name: Create instance
@@ -34,6 +34,9 @@
             access_configs:
               - name: External NAT
                 type: ONE_TO_ONE_NAT
+        tags:
+          items:
+            - redis-server
         zone: "{{ zone }}"
         auth_kind: "serviceaccount"
         project: "{{ project }}"
@@ -42,6 +45,26 @@
         status: RUNNING
       loop: "{{ machines }}"
       register: instance_data
+    
+    - name: Create firewall rule for Redis (6379)
+      google.cloud.gcp_compute_firewall:
+        name: "allow-redis-ingress"
+        network:
+          name: "default"
+        project: "{{ project }}"
+        auth_kind: "serviceaccount"
+        service_account_contents: "{{ gcp_service_account }}"
+        allowed:
+          - ip_protocol: tcp
+            ports:
+              - "6379"
+        # Applies this rule only to instances with this tag
+        target_tags:
+          - redis-server
+        # Allows traffic from anywhere (adjust 0.0.0.0/0 if you need to restrict source IPs)
+        source_ranges:
+          - "0.0.0.0/0"
+        state: present
 
     - name: Print details
       debug:

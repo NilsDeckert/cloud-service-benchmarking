@@ -1,5 +1,33 @@
 ---
+- name: Add Redis GPG key
+  ansible.builtin.get_url:
+    url: https://packages.redis.io/gpg
+    dest: /etc/apt/trusted.gpg.d/redis.asc
+    mode: '0644'
+
+- name: Add redis apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://packages.redis.io/deb {{ ansible_facts['distribution_release'] }} main"
+    state: present
+    filename: redis
+
 - name: Install redis-server from apt
   ansible.builtin.apt:
     name: redis-server
     state: present
+    update_cache: yes
+
+- name: Allow external connections (bind 0.0.0.0)
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^bind '
+    line: 'bind 0.0.0.0'
+  notify: Restart redis
+
+# NEW: Disable protected mode. Without this, Redis blocks external connections if no password is set.
+- name: Disable protected mode
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^protected-mode '
+    line: 'protected-mode no'
+  notify: Restart redis
