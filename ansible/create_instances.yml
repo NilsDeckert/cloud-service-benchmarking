@@ -10,12 +10,12 @@
   vars:
     project: "ace-wording-477310-h0"
     machine_type: "e2-micro" # TODO
-    source_image: "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts"
+    source_image: "projects/ubuntu-os-cloud/global/images/ubuntu-2404-noble-amd64-v20251121"
     zone: "europe-west9-b"
     machines:
-      - "Redis"
-      - "KeyDB"
-      # - "Valkey"
+      - "Valkey"
+      # - "Redis"
+      # - "KeyDB"
       # - "Acdis"
 
   tasks:

@@ -1,0 +1,22 @@
+---
+- name: Install Valkey
+  ansible.builtin.apt:
+    name: 
+     - valkey
+     - valkey-redis-compat
+    update_cache: yes
+
+# --- Configuration for External Access ---
+- name: Allow external connections (bind 0.0.0.0)
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^bind '
+    line: 'bind 0.0.0.0'
+  notify: Restart valkey
+
+- name: Disable protected mode
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^protected-mode '
+    line: 'protected-mode no'
+  notify: Restart valkey
