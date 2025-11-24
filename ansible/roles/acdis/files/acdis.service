@@ -1,0 +1,11 @@
+[Unit]
+Description=Acdis Key-Value Store
+After=network-online.target
+Wants=network-online.target systemd-networkd-wait-online.service
+
+[Service]
+ExecStart=/opt/acdis/acdis
+
+[Install]
+WantedBy=multi-user.target
+

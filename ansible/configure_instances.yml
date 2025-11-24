@@ -9,7 +9,8 @@
       ansible.builtin.service:
         name: redis-server
         state: restarted
-- name: 
+
+- name: Configure keydb
   hosts: keydb
   become: yes
   tasks:
@@ -20,7 +21,8 @@
       ansible.builtin.service:
         name: keydb-server
         state: restarted
-- name: 
+
+- name: Configure valkey
   hosts: valkey
   become: yes
   tasks:
@@ -31,3 +33,10 @@
       ansible.builtin.service:
         name: valkey-server
         state: restarted
+
+- name: Configure acdis
+  hosts: acdis
+  become: yes
+  tasks:
+    - name: Import acdis tasks
+      ansible.builtin.import_tasks: ./roles/acdis/tasks/main.yml

@@ -1,0 +1,69 @@
+---
+- name: Install build-essentials
+  ansible.builtin.apt:
+    name: "build-essential"
+
+# https://waylonwalker.com/install-rust/
+- name: Check if cargo is installed
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/.cargo/bin/cargo"
+  register: cargo_bin
+
+- name: Download Rust Installer
+  when: not cargo_bin.stat.exists
+  ansible.builtin.get_url:
+    url: https://sh.rustup.rs
+    dest: "/tmp/sh.rustup.rs" # Download to tmp
+    mode: '0755'
+    force: 'yes'
+
+- name: Install rust/cargo
+  when: not cargo_bin.stat.exists
+  ansible.builtin.command: "/tmp/sh.rustup.rs -y"
+
+- name: Clone acdis github repository
+  ansible.builtin.git:
+    repo: "https://github.com/NilsDeckert/acdis.git"
+    dest: "{{ ansible_user_dir }}/acdis"
+    version: main
+    force: true
+
+- name: Build acdis binary
+  ansible.builtin.command: "{{ ansible_user_dir }}/.cargo/bin/cargo build --release"
+  args:
+    chdir: "{{ ansible_user_dir }}/acdis"
+
+- name: Create /opt/acdis directory
+  ansible.builtin.file:
+    path: "/opt/acdis"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+
+- name: Copy binary to /opt/acdis
+  ansible.builtin.copy:
+    src: "{{ ansible_user_dir }}/acdis/target/release/acdis"
+    dest: "/opt/acdis/acdis"
+    mode: "0755" # Executable, but not writable by everyone
+    remote_src: true
+    owner: root
+    group: root
+  become: true
+
+- name: Copy unit file
+  ansible.builtin.copy:
+    src: "../files/acdis.service"
+    dest: "/etc/systemd/system/acdis.service"
+    mode: "0644"
+    owner: root
+    group: root
+  become: true
+
+- name: Enable & start acdis service
+  ansible.builtin.systemd_service:
+    state: restarted
+    daemon_reload: true
+    name: acdis
+  become: true
