@@ -2,6 +2,7 @@
 - name: Install build-essentials
   ansible.builtin.apt:
     name: "build-essential"
+    update_cache: yes
 
 # https://waylonwalker.com/install-rust/
 - name: Check if cargo is installed

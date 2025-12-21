@@ -11,13 +11,14 @@
     project: "ace-wording-477310-h0"
     # machine_type: "e2-micro" # TODO
     machine_type: "n4-standard-4" # TODO
-    source_image: "projects/ubuntu-os-cloud/global/images/ubuntu-2404-noble-amd64-v20251121"
+    ubuntu_2204: "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20251203"
+    ubuntu_2404: "projects/ubuntu-os-cloud/global/images/ubuntu-2404-noble-amd64-v20251121"
     zone: "europe-west9-b"
     machines:
       - "Acdis"
-      # - "Valkey"
-      # - "Redis"
-      # - "KeyDB"
+      - "Valkey"
+      - "Redis"
+      - "KeyDB"
 
   tasks:
     - name: Create instance
@@ -28,7 +29,7 @@
           - auto_delete: true
             boot: true
             initialize_params:
-              source_image: "{{ source_image }}"
+              source_image: "{{ ubuntu_2204 if item == 'KeyDB' else ubuntu_2404 }}"
         network_interfaces:
           - network:
               name: "default"
