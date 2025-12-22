@@ -88,6 +88,20 @@ impl LoadGenerator {
         }
 
         redis::cmd("GET").arg(key).clone()
+    }
+
+    pub fn cmd_set(&mut self) -> redis::Cmd {
+        let key: String;
+        let r = rand::random::<f32>();
+        if r <= PROB_SET_KNOWN {
+            key = self.get_known_key().unwrap_or(self.get_key(None));
+        } else {
+            key = self.get_key(None);
+        }
+
+        let val = self.get_val(None);
+
+        redis::cmd("SET").arg(key).arg(val).clone()
 
     }
 }
