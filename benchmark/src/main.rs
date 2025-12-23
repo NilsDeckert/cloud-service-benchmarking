@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use std::{thread, time::Instant};
 use std::time::Duration;
 use redis::{RedisResult, Value};
@@ -7,7 +6,7 @@ use crate::load_generator::load_generator::LoadGenerator;
 
 mod load_generator;
 
-const NUM_REQ: u32 = 10_000;
+const NUM_REQ: u32 = 100000;
 
 extern crate redis;
 
@@ -40,29 +39,25 @@ fn main() {
     // let mut valkey_con = test_connection(&valkey_client, "valkey").expect("Connection failed");
     // let mut keydb_con = test_connection(&keydb_client,  "keydb").expect("Connection failed");
     
-    let mut lg = Arc::new(
-        LoadGenerator::new(0, 100, 0, 100).expect("Error creating load generator")
-    );
-    
-    let num_threads = 10;
+    let x = 10;
     let mut handles = vec![];
 
-    for i in 0..num_threads {
-        let load_generator = Arc::clone(&lg);
-        let acdis_client  = redis::Client::open("redis://localhost/").expect("Failed to create acdis client");
-        let mut acdis_con = test_connection(&acdis_client,  "acdis").expect("Connection failed");
-
+    for i in 0..x {
         let handle = thread::spawn(move || {
+            let acdis_client  = redis::Client::open("redis://localhost/").expect("Failed to create acdis client");
+            let mut acdis_con = test_connection(&acdis_client,  "acdis").expect("Connection failed");
+            let mut lg = LoadGenerator::new(0, 100, 0, 100).expect("Error creating load generator");
+
             let start = Instant::now();
             for _ in 0..NUM_REQ {
-                load_generator.cmd_set().query::<redis::Value>(&mut acdis_con);
-                load_generator.cmd_get().query::<redis::Value>(&mut acdis_con);
+                lg.cmd_set().query::<redis::Value>(&mut acdis_con);
+                lg.cmd_get().query::<redis::Value>(&mut acdis_con);
             }
             let duration = start.elapsed();
 
             duration
         });
-
+00
         handles.push(handle);
     }
 
