@@ -1,15 +1,46 @@
-use std::{thread, time::Instant};
+use std::thread;
 use std::time::Duration;
+
+// Send commands to redis
 use redis::{RedisResult, Value};
 
-use crate::load_generator::load_generator::LoadGenerator;
+// CLI argument parsing
+use clap::{Parser};
 
+// Create benchmark data
 mod load_generator;
+use crate::load_generator::load_generator::LoadGenerator;
+use crate::test_case::get_only::GetOnly;
 
-const NUM_REQ: u32 = 100000;
+// Get test cases
+mod test_case;
+use test_case::case::Case;
 
-extern crate redis;
+// ---------------------------- \\
 
+const NUM_REQ: usize = 10_000;
+const ADDR: &str = "localhost";
+
+// ---------------------------- \\
+
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    /// Instance address to connect to
+    #[arg(short, long, default_value_t=String::from(ADDR))]
+    address: String,
+
+    /// Number of threads to send commands from
+    #[arg(short, long, default_value_t=thread::available_parallelism().unwrap().get())]
+    threads: usize,
+
+    /// Number of requests to send per client
+    #[arg(short, long, default_value_t=NUM_REQ)]
+    requests: usize
+}
+
+/// Open connection, send ping command. Return connection
 fn test_connection(client: &redis::Client, name: &str) -> RedisResult<redis::Connection>{
     let mut con = client.get_connection_with_timeout(Duration::new(3,0))?;
     let mut cmd = redis::Cmd::new();
@@ -30,11 +61,12 @@ fn test_connection(client: &redis::Client, name: &str) -> RedisResult<redis::Con
 
 #[allow(unused)]
 fn main() {
+    let args = Args::parse();
+
     // let redis_client  = redis::Client::open("redis://34.163.77.237/").expect("Failed to create redis client");
     // let valkey_client = redis::Client::open("redis://34.155.91.70/").expect("Failed to create valkey client");
     // let keydb_client  = redis::Client::open("redis://34.163.49.76/").expect("Failed to create keydb client");
 
-    println!("Testing connections...");
     // let mut redis_con = test_connection(&redis_client,  "redis").expect("Connection failed");
     // let mut valkey_con = test_connection(&valkey_client, "valkey").expect("Connection failed");
     // let mut keydb_con = test_connection(&keydb_client,  "keydb").expect("Connection failed");
@@ -43,26 +75,24 @@ fn main() {
     let mut handles = vec![];
 
     for i in 0..x {
+        let addr = format!("redis://{}/", args.address);
         let handle = thread::spawn(move || {
-            let acdis_client  = redis::Client::open("redis://localhost/").expect("Failed to create acdis client");
+            let acdis_client  = redis::Client::open(addr.clone()).expect("Failed to create acdis client");
             let mut acdis_con = test_connection(&acdis_client,  "acdis").expect("Connection failed");
             let mut lg = LoadGenerator::new(0, 100, 0, 100).expect("Error creating load generator");
 
-            let start = Instant::now();
-            for _ in 0..NUM_REQ {
-                lg.cmd_set().query::<redis::Value>(&mut acdis_con);
-                lg.cmd_get().query::<redis::Value>(&mut acdis_con);
-            }
-            let duration = start.elapsed();
+            let mut get_only = GetOnly::new(
+                &mut acdis_con,
+                &mut lg,
+                "./hallo".into()
+            );
 
-            duration
+            get_only.execute(args.requests);
         });
-00
         handles.push(handle);
     }
 
     for handle in handles {
-        let duration = handle.join().unwrap();
-        println!("Took {:?} ({:?} per request)", duration, duration/NUM_REQ);
+        handle.join().unwrap();
     }
 }
