@@ -1,13 +1,17 @@
-use std::{path::PathBuf, time::{Duration, Instant}};
+use std::{fs::File, path::PathBuf, time::{Duration, Instant}};
 
-use crate::{load_generator::{load_generator::LoadGenerator}, test_case::case::Case};
+use chrono::Local;
+use serde::Serialize;
+use tokio::time;
+
+use crate::{load_generator::load_generator::LoadGenerator, test_case::case::{Case, Timing}};
 
 
 pub struct GetOnly<'a> {
     con: &'a mut redis::Connection,
     load_generator: &'a mut LoadGenerator,
     path: PathBuf,
-    duration: Duration
+    duration: Vec<Duration>
 }
 
 impl<'a> Case<'a> for GetOnly<'a> {
@@ -15,20 +19,41 @@ impl<'a> Case<'a> for GetOnly<'a> {
     fn new(con: &'a mut redis::Connection,
         load_generator: &'a mut LoadGenerator,
         path: PathBuf) -> Self {
+
+        assert!(path.is_file() == false);
+
         Self {
             con,
             load_generator,
             path,
-            duration: Duration::new(0, 0)
+            duration: vec!()
         }
     }
 
     fn execute(&mut self, runs: usize) {
         let lg = &mut self.load_generator;
-        let start = Instant::now();
-        for _ in 0..runs {
+        let mut start = std::time::Instant::now();
+        for i in 0..runs {
+            // Time batches of 10
+            if i % 10 == 0 && i != 0 {
+                self.duration.push(start.elapsed());
+                start = Instant::now();
+            }
             let _ = lg.cmd_get().query::<redis::Value>(self.con);
         }
-        self.duration = start.elapsed();
+    }
+
+    fn get_timings(&self) -> Vec<Timing> {
+        let mut timings: Vec<Timing> = vec!();
+
+        for i in 0..self.duration.len() {
+            let t = Timing{
+                id: i,
+                duration: self.duration[i].as_micros()
+            };
+
+            timings.push(t);
+        }
+        timings
     }
 }

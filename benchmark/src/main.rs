@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
@@ -10,6 +11,7 @@ use clap::{Parser};
 // Create benchmark data
 mod load_generator;
 use crate::load_generator::load_generator::LoadGenerator;
+use crate::test_case::case::write_results;
 use crate::test_case::get_only::GetOnly;
 
 // Get test cases
@@ -63,15 +65,7 @@ fn test_connection(client: &redis::Client, name: &str) -> RedisResult<redis::Con
 fn main() {
     let args = Args::parse();
 
-    // let redis_client  = redis::Client::open("redis://34.163.77.237/").expect("Failed to create redis client");
-    // let valkey_client = redis::Client::open("redis://34.155.91.70/").expect("Failed to create valkey client");
-    // let keydb_client  = redis::Client::open("redis://34.163.49.76/").expect("Failed to create keydb client");
-
-    // let mut redis_con = test_connection(&redis_client,  "redis").expect("Connection failed");
-    // let mut valkey_con = test_connection(&valkey_client, "valkey").expect("Connection failed");
-    // let mut keydb_con = test_connection(&keydb_client,  "keydb").expect("Connection failed");
-    
-    let x = 10;
+    let x = args.threads;
     let mut handles = vec![];
 
     for i in 0..x {
@@ -88,11 +82,15 @@ fn main() {
             );
 
             get_only.execute(args.requests);
+            get_only.get_timings()
         });
         handles.push(handle);
     }
 
+    let mut timings = vec!();
     for handle in handles {
-        handle.join().unwrap();
+        timings.append(&mut handle.join().unwrap());
     }
+
+    write_results(&PathBuf::from("./target/"), timings);
 }
