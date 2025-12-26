@@ -6,7 +6,7 @@ use std::time::Duration;
 use redis::{RedisResult, Value};
 
 // CLI argument parsing
-use clap::{Parser};
+use clap::Parser;
 
 // Create benchmark data
 mod load_generator;
@@ -25,7 +25,6 @@ const ADDR: &str = "localhost";
 
 // ---------------------------- \\
 
-
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -39,17 +38,17 @@ struct Args {
 
     /// Number of requests to send per client
     #[arg(short, long, default_value_t=NUM_REQ)]
-    requests: usize
+    requests: usize,
 }
 
 /// Open connection, send ping command. Return connection
-fn test_connection(client: &redis::Client, name: &str) -> RedisResult<redis::Connection>{
-    let mut con = client.get_connection_with_timeout(Duration::new(3,0))?;
+fn test_connection(client: &redis::Client, name: &str) -> RedisResult<redis::Connection> {
+    let mut con = client.get_connection_with_timeout(Duration::new(3, 0))?;
     let mut cmd = redis::Cmd::new();
 
     let ping = cmd.arg("PING").query::<redis::Value>(&mut con);
     if let Ok(Value::SimpleString(s)) = ping {
-        println!("{name}: {s}");
+        assert!(s == "PONG");
     } else {
         println!("{name}: Ping failed");
         if let Err(e) = ping {
@@ -65,21 +64,22 @@ fn test_connection(client: &redis::Client, name: &str) -> RedisResult<redis::Con
 fn main() {
     let args = Args::parse();
 
-    let x = args.threads;
+    println!(
+        "Sending {} * {} requests to {}...",
+        args.threads, args.requests, args.address
+    );
+
     let mut handles = vec![];
 
-    for i in 0..x {
+    for i in 0..args.threads {
         let addr = format!("redis://{}/", args.address);
         let handle = thread::spawn(move || {
-            let acdis_client  = redis::Client::open(addr.clone()).expect("Failed to create acdis client");
-            let mut acdis_con = test_connection(&acdis_client,  "acdis").expect("Connection failed");
+            let acdis_client =
+                redis::Client::open(addr.clone()).expect("Failed to create acdis client");
+            let mut acdis_con = test_connection(&acdis_client, "acdis").expect("Connection failed");
             let mut lg = LoadGenerator::new(0, 100, 0, 100).expect("Error creating load generator");
 
-            let mut get_only = GetOnly::new(
-                &mut acdis_con,
-                &mut lg,
-                "./hallo".into()
-            );
+            let mut get_only = GetOnly::new(&mut acdis_con, &mut lg, "./hallo".into());
 
             get_only.execute(args.requests);
             get_only.get_timings()
@@ -87,7 +87,7 @@ fn main() {
         handles.push(handle);
     }
 
-    let mut timings = vec!();
+    let mut timings = vec![];
     for handle in handles {
         timings.append(&mut handle.join().unwrap());
     }
