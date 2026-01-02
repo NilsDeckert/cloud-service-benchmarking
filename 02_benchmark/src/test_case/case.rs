@@ -28,9 +28,8 @@ pub fn write_results(path: &PathBuf, timings: Vec<Timing>) {
     let mut mb_f = File::create_new(path.join(format!("{name}.csv")));
 
     while mb_f.is_err() {
-        println!("Error: {:?}", mb_f);
         name = format!("{name}_1").into();
-        mb_f = File::create(&name);
+        mb_f = File::create_new(format!("{name}.csv"));
     }
 
     println!("Saving to file {}.csv", name);

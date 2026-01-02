@@ -48,6 +48,10 @@ struct Args {
     /// Number of requests to send per client
     #[arg(short, long, default_value_t=NUM_REQ)]
     requests: usize,
+
+    /// Type of requests to send
+    #[arg(short, long, value_delimiter = ',', default_values_t=vec![String::from("set")])]
+    cmd: Vec<String>,
 }
 
 /// Open connection, send ping command. Return connection
@@ -81,6 +85,9 @@ fn main() {
     let mut handles = vec![];
 
     let start = std::time::Instant::now();
+    println!("{:?}", args.cmd);
+    let get = args.cmd.contains(&String::from("get"));
+    let set = args.cmd.contains(&String::from("set"));
 
     for i in 0..args.threads {
         let addr = format!("redis://{}/", args.address);
@@ -94,17 +101,27 @@ fn main() {
                 VAL_LEN_MIN,
                 VAL_LEN_MAX).expect("Error creating load generator");
 
-            let mut get_only = SetOnly::new(&mut con, &mut lg, "./hallo".into());
+            if set {
+                println!("SET");
+                let mut set_only = SetOnly::new(&mut con, &mut lg, "./hallo".into());
+                set_only.execute((args.requests / args.threads));
+            }
 
-            get_only.execute((args.requests / args.threads));
-            get_only.get_timings()
+            if get {
+                println!("GET");
+                let mut get_only = GetOnly::new(&mut con, &mut lg, "./hallo".into());
+                get_only.execute((args.requests / args.threads));
+                // get_only.get_timings();
+            }
+
         });
         handles.push(handle);
     }
 
     let mut timings = vec![];
     for handle in handles {
-        timings.append(&mut handle.join().unwrap());
+        &mut handle.join().unwrap();
+        // timings.append(&mut handle.join().unwrap());
     }
 
     let total = pretty_duration(&start.elapsed(), None);
