@@ -18,12 +18,16 @@ use crate::test_case::get_only::GetOnly;
 mod test_case;
 use test_case::case::Case;
 
-// ---------------------------- \\
+// -------- Default Values --------- \\
 
 const NUM_REQ: usize = 10_000;
 const ADDR: &str = "localhost";
+const KEY_LEN_MIN: u32 = 0;
+const VAL_LEN_MIN: u32 = 0;
+const KEY_LEN_MAX: u32 = 1000;
+const VAL_LEN_MAX: u32 = 100000;
 
-// ---------------------------- \\
+// --------------------------------- \\
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -77,7 +81,11 @@ fn main() {
             let acdis_client =
                 redis::Client::open(addr.clone()).expect("Failed to create acdis client");
             let mut acdis_con = test_connection(&acdis_client, "acdis").expect("Connection failed");
-            let mut lg = LoadGenerator::new(0, 100, 0, 100).expect("Error creating load generator");
+            let mut lg = LoadGenerator::new(
+                KEY_LEN_MIN,
+                KEY_LEN_MAX,
+                VAL_LEN_MIN,
+                VAL_LEN_MAX).expect("Error creating load generator");
 
             let mut get_only = GetOnly::new(&mut acdis_con, &mut lg, "./hallo".into());
 

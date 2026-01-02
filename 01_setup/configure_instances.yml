@@ -1,3 +1,15 @@
+- name: Install GCP agent
+  become: yes
+  tasks:
+    - name: Download GCP ops agent
+      ansible.builtin.get_url: 
+        url: https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+        dest: "~/add-gcp-agent.sh"
+
+    - name: Install
+      ansible.builtin.shell:
+        cmd: "sudo bash add-gcp-agent.sh --also-install"
+
 - name: Configure redis node
   hosts: redis
   become: yes

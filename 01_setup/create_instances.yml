@@ -17,8 +17,8 @@
     machines:
       - "Acdis"
       - "Valkey"
-      - "Redis"
-      - "KeyDB"
+      # - "Redis"
+      # - "KeyDB"
 
   tasks:
     - name: Create instance

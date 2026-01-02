@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::File, path::PathBuf};
+use std::{fs::File, path::PathBuf};
 
 use chrono::Local;
 use serde::Serialize;
