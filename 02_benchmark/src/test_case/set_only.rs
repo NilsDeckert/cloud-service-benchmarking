@@ -3,14 +3,14 @@ use std::{path::PathBuf, time::{Duration, Instant}};
 use crate::{load_generator::load_generator::LoadGenerator, test_case::case::{Case, Timing}};
 
 
-pub struct GetOnly<'a> {
+pub struct SetOnly<'a> {
     con: &'a mut redis::Connection,
     load_generator: &'a mut LoadGenerator,
     path: PathBuf,
     duration: Vec<Duration>
 }
 
-impl<'a> Case<'a> for GetOnly<'a> {
+impl<'a> Case<'a> for SetOnly<'a> {
 
     fn new(con: &'a mut redis::Connection,
         load_generator: &'a mut LoadGenerator,
@@ -35,7 +35,7 @@ impl<'a> Case<'a> for GetOnly<'a> {
                 self.duration.push(start.elapsed());
                 start = Instant::now();
             }
-            let res = lg.cmd_get().query::<redis::Value>(self.con);
+            let res = lg.cmd_set().query::<redis::Value>(self.con);
             if let Err(e) = res {
                 println!("Error: {}", e.category());
             }

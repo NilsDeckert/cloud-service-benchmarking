@@ -2,6 +2,9 @@ use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
+// Pretty print timings
+use pretty_duration::pretty_duration;
+
 // Send commands to redis
 use redis::{RedisResult, Value};
 
@@ -13,6 +16,8 @@ mod load_generator;
 use crate::load_generator::load_generator::LoadGenerator;
 use crate::test_case::case::write_results;
 use crate::test_case::get_only::GetOnly;
+use crate::test_case::set_only::SetOnly;
+
 
 // Get test cases
 mod test_case;
@@ -25,7 +30,7 @@ const ADDR: &str = "localhost";
 const KEY_LEN_MIN: u32 = 0;
 const VAL_LEN_MIN: u32 = 0;
 const KEY_LEN_MAX: u32 = 1000;
-const VAL_LEN_MAX: u32 = 100000;
+const VAL_LEN_MAX: u32 = 1000;
 
 // --------------------------------- \\
 
@@ -75,21 +80,23 @@ fn main() {
 
     let mut handles = vec![];
 
+    let start = std::time::Instant::now();
+
     for i in 0..args.threads {
         let addr = format!("redis://{}/", args.address);
         let handle = thread::spawn(move || {
-            let acdis_client =
-                redis::Client::open(addr.clone()).expect("Failed to create acdis client");
-            let mut acdis_con = test_connection(&acdis_client, "acdis").expect("Connection failed");
+            let client =
+                redis::Client::open(addr.clone()).expect("Failed to create client");
+            let mut con = test_connection(&client, "client").expect("Connection failed");
             let mut lg = LoadGenerator::new(
                 KEY_LEN_MIN,
                 KEY_LEN_MAX,
                 VAL_LEN_MIN,
                 VAL_LEN_MAX).expect("Error creating load generator");
 
-            let mut get_only = GetOnly::new(&mut acdis_con, &mut lg, "./hallo".into());
+            let mut get_only = SetOnly::new(&mut con, &mut lg, "./hallo".into());
 
-            get_only.execute(args.requests);
+            get_only.execute((args.requests / args.threads));
             get_only.get_timings()
         });
         handles.push(handle);
@@ -99,6 +106,10 @@ fn main() {
     for handle in handles {
         timings.append(&mut handle.join().unwrap());
     }
+
+    let total = pretty_duration(&start.elapsed(), None);
+
+    println!("Done! Took {total}");
 
     write_results(&PathBuf::from("./target/"), timings);
 }
