@@ -45,6 +45,6 @@
 - name: Use threads for reading
   ansible.builtin.lineinfile:
     path: /etc/valkey/valkey.conf
-    regexp: '^io-threads-do-read'
-    line: 'io-threads-do-read yes'
+    regexp: '^io-threads-do-reads'
+    line: 'io-threads-do-reads yes'
   notify: Restart valkey
