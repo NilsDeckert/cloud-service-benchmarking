@@ -1,0 +1,26 @@
+- name: Run benchmark
+  become: yes
+  gather_facts: yes
+  hosts:
+    - bench1
+    - bench2
+    - bench3
+  tasks:
+    - name: Run benchmark
+      ansible.builtin.shell: 
+        cmd: "sudo /opt/benchmarker/benchmark -a {{ target_ip }} -c get -r 1000000 -t 32"
+
+    - name: Find csv
+      find:
+        paths: "/home/nils/"
+        file_type: file
+        patterns: '*.csv'
+      register: csv_list
+
+    - name: Download csv
+      ansible.builtin.fetch:
+        src: "{{ item.path }}"
+        dest: "./results/{{ inventory_hostname }}/"
+        flat: yes
+      loop: "{{ csv_list.files }}"
+

@@ -10,13 +10,16 @@
   vars:
     project: "ace-wording-477310-h0"
     # machine_type: "e2-micro" # TODO
-    machine_type: "n4-standard-4" # TODO
+    machine_type: "n4-highcpu-4" # TODO
     ubuntu_2204: "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20251203"
     ubuntu_2404: "projects/ubuntu-os-cloud/global/images/ubuntu-2404-noble-amd64-v20251121"
     zone: "europe-west9-b"
     machines:
-      - "Acdis"
       - "Valkey"
+      - "Bench1"
+      - "Bench2"
+      - "Bench3"
+      # - "Acdis"
       # - "Redis"
       # - "KeyDB"
 
@@ -43,6 +46,10 @@
         auth_kind: "serviceaccount"
         project: "{{ project }}"
         service_account_contents: "{{ gcp_service_account }}"
+        service_accounts: # Link our service account, needed for monitoring agent to work
+          - email: "ansible@ace-wording-477310-h0.iam.gserviceaccount.com"
+            scopes: 
+             - "https://www.googleapis.com/auth/cloud-platform"
         state: "present"
         status: RUNNING
       loop: "{{ machines }}"

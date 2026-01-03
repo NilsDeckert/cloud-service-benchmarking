@@ -1,0 +1,54 @@
+---
+- name: Install build-essentials
+  ansible.builtin.apt:
+    name: "build-essential"
+    update_cache: true
+
+# https://waylonwalker.com/install-rust/
+- name: Check if cargo is installed
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/.cargo/bin/cargo"
+  register: cargo_bin
+
+- name: Download Rust Installer
+  when: not cargo_bin.stat.exists
+  ansible.builtin.get_url:
+    url: https://sh.rustup.rs
+    dest: "/tmp/sh.rustup.rs" # Download to tmp
+    mode: '0755'
+    force: 'yes'
+
+- name: Install rust/cargo
+  when: not cargo_bin.stat.exists
+  ansible.builtin.command: "/tmp/sh.rustup.rs -y"
+
+- name: Clone csb github repository
+  ansible.builtin.git:
+    repo: "https://github.com/NilsDeckert/cloud-service-benchmarking.git"
+    dest: "{{ ansible_user_dir }}/benchmarker"
+    version: main
+    force: true
+
+- name: Build benchmarker binary
+  ansible.builtin.command: "{{ ansible_user_dir }}/.cargo/bin/cargo build --release"
+  args:
+    chdir: "{{ ansible_user_dir }}/benchmarker/02_benchmark"
+
+- name: Create /opt/benchmarker directory
+  ansible.builtin.file:
+    path: "/opt/benchmarker"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+
+- name: Copy binary to /opt/benchmarker
+  ansible.builtin.copy:
+    src: "{{ ansible_user_dir }}/benchmarker/02_benchmark/target/release/benchmark"
+    dest: "/opt/benchmarker/benchmark"
+    mode: "0755" # Executable, but not writable by everyone
+    remote_src: true
+    owner: root
+    group: root
+  become: true

@@ -20,3 +20,31 @@
     regexp: '^protected-mode '
     line: 'protected-mode no'
   notify: Restart valkey
+
+- name: Disable RDB persistence (snapshots)
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^save'
+    line: 'save ""'
+  notify: Restart valkey
+
+- name: Disable AOF persistence
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^appendonly '
+    line: 'appendonly no'
+  notify: Restart valkey
+
+- name: Enable multi-thread
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^io-threads'
+    line: 'io-threads 3' # Valkey recommends cores - 1
+  notify: Restart valkey
+
+- name: Use threads for reading
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^io-threads-do-read'
+    line: 'io-threads-do-read yes'
+  notify: Restart valkey

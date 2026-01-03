@@ -1,14 +1,15 @@
 - name: Install GCP agent
   become: yes
+  hosts: all
   tasks:
     - name: Download GCP ops agent
       ansible.builtin.get_url: 
         url: https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
-        dest: "~/add-gcp-agent.sh"
+        dest: "/tmp/add-gcp-agent.sh"
 
     - name: Install
       ansible.builtin.shell:
-        cmd: "sudo bash add-gcp-agent.sh --also-install"
+        cmd: "sudo bash /tmp/add-gcp-agent.sh --also-install"
 
 - name: Configure redis node
   hosts: redis
@@ -52,3 +53,24 @@
   tasks:
     - name: Import acdis tasks
       ansible.builtin.import_tasks: ./roles/acdis/tasks/main.yml
+
+- name: Configure benchmarker
+  hosts:
+    - bench1
+    - bench2
+    - bench3
+  become: yes
+  tasks:
+    - name: Import benchmarker tasks
+      ansible.builtin.import_tasks: ./roles/benchmarker/tasks/main.yml
+
+- name: Generate env file
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Create environment variable file from GCP inventory
+      template:
+        src: "./roles/gcp_create_vms/files/vars.j2"
+        dest: "./gcp_hosts.env"
+        mode: '0600'
