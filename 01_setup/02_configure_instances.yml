@@ -72,5 +72,5 @@
     - name: Create environment variable file from GCP inventory
       template:
         src: "./roles/gcp_create_vms/files/vars.j2"
-        dest: "./gcp_hosts.env"
+        dest: "./hosts.env"
         mode: '0600'

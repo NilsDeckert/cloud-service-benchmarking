@@ -1,6 +1,6 @@
 # Ansible setup
 
-This directory contains the setup to provision Google Cloud Computeengine instances that will be used to host the SUTs and the benchmarking code itself.
+This directory contains the setup to provision Google Cloud Compute Engine instances that will be used to host the SUTs and the benchmarking code itself.
 
 ## Requirements
 
@@ -36,17 +36,29 @@ Additionally, you have to enable the `Compute Engine API` for the respective pro
 To create the required gcp instances, run the following command:
 
 ```bash
-ansible-playbook --ask-vault-pass create_instance.yml
+ansible-playbook 01_create_instance.yml --ask-vault-pass
 ```
 
 To configure them, run:
 
 ```bash
-ansible-playbook configure_instances.yml -i inventory_gcp_compute.yml --ask-vault-pass
+ansible-playbook 02_configure_instances.yml -i inventory_gcp_compute.yml --ask-vault-pass
+```
+
+This step produces a `hosts.env` file that defines environment variables that contain the instances IP addresses. To load the environment variables run:
+
+```bash
+source hosts.env
+```
+
+You can start the benchmark from the configured benchmark machines:
+
+```bash
+ansible-playbook 03_run_benchmark.yml -i inventory_gcp_compute.yml --ask-vault-pass --extra-vars "target_ip=$HOST_VALKEY_IP"
 ```
 
 Finally, you can stop all instances:
 
 ```bash
-ansible-playbook stop_instances.yml --ask-vault-pass
+ansible-playbook 04_stop_instances.yml --ask-vault-pass
 ```
