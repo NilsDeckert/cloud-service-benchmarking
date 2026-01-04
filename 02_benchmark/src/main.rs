@@ -43,6 +43,10 @@ struct Args {
     #[arg(short, long, default_value_t=String::from(ADDR))]
     address: String,
 
+    /// Instance port to connect to
+    #[arg(short, long, default_value_t=6379)]
+    port: usize,
+
     /// Number of threads to send commands from
     #[arg(short, long, default_value_t=thread::available_parallelism().unwrap().get())]
     threads: usize,
@@ -97,7 +101,7 @@ fn main() {
     let etc = args.cmd.contains(&String::from("etc"));
 
     for i in 0..args.threads {
-        let addr = format!("redis://{}/", args.address);
+        let addr = format!("redis://{}:{}", args.address, args.port);
         let handle = thread::spawn(move || {
             let client =
                 redis::Client::open(addr.clone()).expect("Failed to create client");
