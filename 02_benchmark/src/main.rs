@@ -13,10 +13,12 @@ use clap::Parser;
 
 // Create benchmark data
 mod load_generator;
+use crate::load_generator::etc_load::EtcLoadGenerator;
 use crate::load_generator::load_generator::LoadGenerator;
 use crate::test_case::case::write_results;
 use crate::test_case::get_only::GetOnly;
 use crate::test_case::set_only::SetOnly;
+use crate::test_case::etc::ETC;
 
 
 // Get test cases
@@ -50,8 +52,12 @@ struct Args {
     requests: usize,
 
     /// Type of requests to send
-    #[arg(short, long, value_delimiter = ',', default_values_t=vec![String::from("set")])]
+    #[arg(short, long, value_delimiter = ',', default_values_t=vec![String::from("etc")])]
     cmd: Vec<String>,
+
+    /// Flag to enable or disable writing result csv
+    #[arg(long)]
+    skip_logs: bool
 }
 
 /// Open connection, send ping command. Return connection
@@ -88,6 +94,7 @@ fn main() {
     println!("{:?}", args.cmd);
     let get = args.cmd.contains(&String::from("get"));
     let set = args.cmd.contains(&String::from("set"));
+    let etc = args.cmd.contains(&String::from("etc"));
 
     for i in 0..args.threads {
         let addr = format!("redis://{}/", args.address);
@@ -114,6 +121,14 @@ fn main() {
                 // get_only.get_timings();
             }
 
+            if etc {
+                println!("ETC");
+                let mut etc_lg = EtcLoadGenerator::new();
+                let mut etc = ETC::new(&mut con, &mut etc_lg, "./hallo".into());
+                etc.execute((args.requests / args.threads));
+                let _ = etc.get_timings();
+            }
+
         });
         handles.push(handle);
     }
@@ -128,5 +143,7 @@ fn main() {
 
     println!("Done! Took {total}");
 
-    write_results(&PathBuf::from("./target/"), timings);
+    if !args.skip_logs {
+        write_results(&PathBuf::from("./target/"), timings);
+    }
 }
