@@ -1,0 +1,44 @@
+---
+- name: Install Valkey
+  ansible.builtin.apt:
+    name:
+      - valkey
+      - valkey-redis-compat
+    update_cache: true
+
+# --- Configuration for External Access ---
+- name: Allow external connections (bind 0.0.0.0)
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^bind '
+    line: 'bind 0.0.0.0'
+
+- name: Disable protected mode
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^protected-mode '
+    line: 'protected-mode no'
+
+- name: Disable RDB persistence (snapshots)
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^save'
+    line: 'save ""'
+
+- name: Disable AOF persistence
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^appendonly '
+    line: 'appendonly no'
+
+- name: Enable multi-thread
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^io-threads'
+    line: 'io-threads 3' # Valkey recommends cores - 1
+
+- name: Use threads for reading
+  ansible.builtin.lineinfile:
+    path: /etc/valkey/valkey.conf
+    regexp: '^io-threads-do-reads'
+    line: 'io-threads-do-reads yes'

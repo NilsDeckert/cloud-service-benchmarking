@@ -1,0 +1,37 @@
+---
+- name: Clean cluster directory
+  ansible.builtin.file:
+    path: /home/nils/cluster/
+    state: absent
+
+- name: Create cluster directory
+  ansible.builtin.file:
+    path: /home/nils/cluster
+    state: directory
+    mode: '0755'
+
+- name: Upload cluster config
+  ansible.builtin.copy:
+    src: ../files/cluster.conf
+    dest: /home/nils/cluster/cluster.conf
+    mode: '0755'
+
+- name: Upload cluster service file
+  ansible.builtin.copy:
+    src: ../files/valkey-cluster.service
+    dest: /etc/systemd/system/valkey-cluster.service
+    mode: '0644'
+    owner: bin
+    group: root
+
+- name: Stop service
+  ansible.builtin.service:
+    name: valkey-server
+    state: stopped
+    enabled: false
+
+- name: (Re)start cluster service
+  ansible.builtin.service:
+    name: valkey-cluster
+    state: restarted
+    enabled: true

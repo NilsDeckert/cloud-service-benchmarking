@@ -1,0 +1,8 @@
+[Unit]
+Description=Valkey Server (Cluster)
+
+[Service]
+ExecStart=/usr/bin/valkey-server /home/nils/cluster/cluster.conf
+
+[Install]
+WantedBy=multi-user.target

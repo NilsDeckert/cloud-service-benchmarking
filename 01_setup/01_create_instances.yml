@@ -15,10 +15,12 @@
     ubuntu_2404: "projects/ubuntu-os-cloud/global/images/ubuntu-2404-noble-amd64-v20251121"
     zone: "europe-west9-b"
     machines:
-      - "Valkey"
+      - "Valkey1"
+      - "Valkey2"
+      - "Valkey3"
       - "Bench1"
-      - "Bench2"
-      - "Bench3"
+      # - "Bench2"
+      # - "Bench3"
       # - "Acdis"
       # - "Redis"
       # - "KeyDB"
@@ -55,7 +57,7 @@
       loop: "{{ machines }}"
       register: instance_data
     
-    - name: Create firewall rule for Redis (6379)
+    - name: Create firewall rule for Redis (6379, 7000)
       google.cloud.gcp_compute_firewall:
         name: "allow-redis-ingress"
         network:
@@ -67,6 +69,8 @@
           - ip_protocol: tcp
             ports:
               - "6379"
+              - "7000"
+              - "17000" # "By default, the cluster bus port is set by adding 10000 to the data port"
         # Applies this rule only to instances with this tag
         target_tags:
           - redis-server

@@ -36,16 +36,13 @@
         state: restarted
 
 - name: Configure valkey
-  hosts: valkey
+  hosts: valkey*
   become: yes
   tasks:
     - name: Import valkey tasks
-      ansible.builtin.import_tasks: ./tasks/install_valkey.yml
-  handlers:
-    - name: Restart valkey
-      ansible.builtin.service:
-        name: valkey-server
-        state: restarted
+      ansible.builtin.import_tasks: ./roles/valkey/tasks/main.yml
+    - name: Configure cluster
+      ansible.builtin.import_tasks: ./roles/valkey/tasks/cluster.yml
 
 - name: Configure acdis
   hosts: acdis
@@ -56,9 +53,7 @@
 
 - name: Configure benchmarker
   hosts:
-    - bench1
-    - bench2
-    - bench3
+    - bench*
   become: yes
   tasks:
     - name: Import benchmarker tasks
