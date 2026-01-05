@@ -24,7 +24,7 @@ const ETC_PERC_CUM_SET: f32 = ETC_PERC_GET + ETC_PERC_SET;
 const _: () = assert!(ETC_PERC_GET + ETC_PERC_SET + ETC_PERC_DEL == 1 as f32);
 
 pub struct ETC<'a> {
-    con: &'a mut redis::Connection,
+    con: &'a mut dyn redis::ConnectionLike,
     load_generator: &'a mut EtcLoadGenerator,
     _path: PathBuf,
     duration: Vec<Duration>,
@@ -41,7 +41,7 @@ enum SupportedCMDs {
 // impl<'a> Case<'a> for ETC<'a> {
 impl<'a> ETC<'a> {
 
-    pub fn new(con: &'a mut redis::Connection,
+    pub fn new(con: &'a mut dyn redis::ConnectionLike,
         load_generator: &'a mut EtcLoadGenerator,
         path: PathBuf) -> Self {
 

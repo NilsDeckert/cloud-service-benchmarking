@@ -12,7 +12,7 @@ pub struct Timing {
 }
 
 pub trait Case<'a> {
-    fn new(con: &'a mut redis::Connection,
+    fn new(con: &'a mut dyn redis::ConnectionLike,
         load_generator: &'a mut LoadGenerator,
         path: PathBuf) -> Self; 
 

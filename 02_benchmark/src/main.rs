@@ -60,6 +60,10 @@ struct Args {
     cmd: Vec<String>,
 
     /// Flag to enable or disable writing result csv
+    #[arg(short, long)]
+    cluster: bool,
+
+    /// Flag to disable writing result csv
     #[arg(long)]
     skip_logs: bool
 }
@@ -103,9 +107,17 @@ fn main() {
     for i in 0..args.threads {
         let addr = format!("redis://{}:{}", args.address, args.port);
         let handle = thread::spawn(move || {
-            let client =
-                redis::Client::open(addr.clone()).expect("Failed to create client");
-            let mut con = test_connection(&client, "client").expect("Connection failed");
+
+            // Somehow need to save both types Connection and ClusterConnection in same variable
+            let mut con: Box<dyn redis::ConnectionLike>;
+            if args.cluster {
+                let client = redis::cluster::ClusterClient::new(vec![addr.clone()]);
+                con = Box::new(client.unwrap().get_connection().unwrap());
+            } else {
+                let client = redis::Client::open(addr.clone()).expect("Failed to create client");
+                con = Box::new(test_connection(&client, "client").expect("Connection failed"));
+            }
+
             let mut lg = LoadGenerator::new(
                 KEY_LEN_MIN,
                 KEY_LEN_MAX,
@@ -114,13 +126,13 @@ fn main() {
 
             if set {
                 println!("SET");
-                let mut set_only = SetOnly::new(&mut con, &mut lg, "./hallo".into());
+                let mut set_only = SetOnly::new(&mut *con, &mut lg, "./hallo".into());
                 set_only.execute((args.requests / args.threads));
             }
 
             if get {
                 println!("GET");
-                let mut get_only = GetOnly::new(&mut con, &mut lg, "./hallo".into());
+                let mut get_only = GetOnly::new(&mut *con, &mut lg, "./hallo".into());
                 get_only.execute((args.requests / args.threads));
                 // get_only.get_timings();
             }
@@ -128,7 +140,7 @@ fn main() {
             if etc {
                 println!("ETC");
                 let mut etc_lg = EtcLoadGenerator::new();
-                let mut etc = ETC::new(&mut con, &mut etc_lg, "./hallo".into());
+                let mut etc = ETC::new(&mut *con, &mut etc_lg, "./hallo".into());
                 etc.execute((args.requests / args.threads));
                 let _ = etc.get_timings();
             }

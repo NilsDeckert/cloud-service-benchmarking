@@ -4,7 +4,7 @@ use crate::{load_generator::load_generator::LoadGenerator, test_case::case::{Cas
 
 
 pub struct SetOnly<'a> {
-    con: &'a mut redis::Connection,
+    con: &'a mut dyn redis::ConnectionLike,
     load_generator: &'a mut LoadGenerator,
     path: PathBuf,
     duration: Vec<Duration>
@@ -12,7 +12,7 @@ pub struct SetOnly<'a> {
 
 impl<'a> Case<'a> for SetOnly<'a> {
 
-    fn new(con: &'a mut redis::Connection,
+    fn new(con: &'a mut dyn redis::ConnectionLike,
         load_generator: &'a mut LoadGenerator,
         path: PathBuf) -> Self {
 
