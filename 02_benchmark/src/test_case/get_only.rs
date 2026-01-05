@@ -38,6 +38,9 @@ impl<'a> Case<'a> for GetOnly<'a> {
             let res = lg.cmd_get().query::<redis::Value>(self.con);
             if let Err(e) = res {
                 println!("Error: {}", e.category());
+                if let Some(detail) = e.detail() {
+                    println!("Details: {detail}");
+                }
             }
         }
     }

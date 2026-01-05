@@ -11,8 +11,8 @@
     mode: '0755'
 
 - name: Upload cluster config
-  ansible.builtin.copy:
-    src: ../files/cluster.conf
+  ansible.builtin.template:
+    src: ../files/cluster.conf.js
     dest: /home/nils/cluster/cluster.conf
     mode: '0755'
 

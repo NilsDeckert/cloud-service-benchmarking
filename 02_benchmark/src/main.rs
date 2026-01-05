@@ -6,7 +6,7 @@ use std::time::Duration;
 use pretty_duration::pretty_duration;
 
 // Send commands to redis
-use redis::{RedisResult, Value};
+use redis::{ConnectionLike, RedisResult, Value};
 
 // CLI argument parsing
 use clap::Parser;
@@ -40,8 +40,8 @@ const VAL_LEN_MAX: u32 = 1000;
 #[command(version, about, long_about = None)]
 struct Args {
     /// Instance address to connect to
-    #[arg(short, long, default_value_t=String::from(ADDR))]
-    address: String,
+    #[arg(short, long, value_delimiter = ',', default_values_t=vec![String::from(ADDR)])]
+    address: Vec<String>,
 
     /// Instance port to connect to
     #[arg(short, long, default_value_t=6379)]
@@ -60,7 +60,7 @@ struct Args {
     cmd: Vec<String>,
 
     /// Flag to enable or disable writing result csv
-    #[arg(short, long)]
+    #[arg(long)]
     cluster: bool,
 
     /// Flag to disable writing result csv
@@ -92,7 +92,7 @@ fn main() {
     let args = Args::parse();
 
     println!(
-        "Sending {} * {} requests to {}...",
+        "Sending {} * {} requests to {:?}...",
         args.threads, args.requests, args.address
     );
 
@@ -105,16 +105,23 @@ fn main() {
     let etc = args.cmd.contains(&String::from("etc"));
 
     for i in 0..args.threads {
-        let addr = format!("redis://{}:{}", args.address, args.port);
+        let mut addr = vec![];
+        for s in &args.address {
+            addr.push(format!("redis://{}:{}", s, args.port));
+        }
+
         let handle = thread::spawn(move || {
 
             // Somehow need to save both types Connection and ClusterConnection in same variable
             let mut con: Box<dyn redis::ConnectionLike>;
             if args.cluster {
-                let client = redis::cluster::ClusterClient::new(vec![addr.clone()]);
-                con = Box::new(client.unwrap().get_connection().unwrap());
+                println!("Running in cluster mode!");
+                let client = redis::cluster::ClusterClient::new(addr).unwrap();
+                let mut c = client.get_connection().unwrap();
+                c.check_connection();
+                con = Box::new(c);
             } else {
-                let client = redis::Client::open(addr.clone()).expect("Failed to create client");
+                let client = redis::Client::open(addr[0].clone()).expect("Failed to create client");
                 con = Box::new(test_connection(&client, "client").expect("Connection failed"));
             }
 
