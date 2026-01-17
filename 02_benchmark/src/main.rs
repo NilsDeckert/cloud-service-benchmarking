@@ -39,7 +39,7 @@ const VAL_LEN_MAX: u32 = 1000;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    /// Instance address to connect to
+    /// Instance address(es) to connect to
     #[arg(short, long, value_delimiter = ',', default_values_t=vec![String::from(ADDR)])]
     address: Vec<String>,
 

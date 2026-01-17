@@ -51,6 +51,10 @@ This step produces a `hosts.env` file that defines environment variables that co
 source hosts.env
 ```
 
+> [!NOTE]
+> If you're setting up a cluster, you have to (manually) join all nodes. To do this, run e.g.
+> `redis-cli --cluster create $HOST_VALKEY1_IP:7000 $HOST_VALKEY2_IP:7000 $HOST_VALKEY3_IP:7000 --cluster-replicas 0`
+
 You can start the benchmark from the configured benchmark machines:
 
 ```bash

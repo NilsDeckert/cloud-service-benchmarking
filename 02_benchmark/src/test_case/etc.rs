@@ -7,6 +7,7 @@ use std::{path::PathBuf, time::{Duration, Instant}};
 use rand::Rng;
 use redis::RedisResult;
 use std::collections::HashMap;
+use hdrhistogram::Histogram;
 
 use crate::{load_generator::etc_load::EtcLoadGenerator, test_case::case::{Case, Timing}};
 
@@ -28,6 +29,9 @@ pub struct ETC<'a> {
     load_generator: &'a mut EtcLoadGenerator,
     _path: PathBuf,
     duration: Vec<Duration>,
+    dur_get: Histogram::<u64>,
+    dur_set: Histogram::<u64>,
+    dur_del: Histogram::<u64>,
     ratio: HashMap<SupportedCMDs, u32>
 }
 
@@ -52,19 +56,16 @@ impl<'a> ETC<'a> {
             load_generator,
             _path: path,
             duration: vec!(),
-            ratio: HashMap::new()
+            ratio: HashMap::new(),
+            dur_get: Histogram::<u64>::new_with_bounds(1, 60 * 60 * 1000, 2).unwrap(),
+            dur_set: Histogram::<u64>::new_with_bounds(1, 60 * 60 * 1000, 2).unwrap(),
+            dur_del: Histogram::<u64>::new_with_bounds(1, 60 * 60 * 1000, 2).unwrap(),
         }
     }
 
     pub fn execute(&mut self, runs: usize) {
-        let mut start = std::time::Instant::now();
 
-        for i in 0..runs {
-            // Time batches of 10
-            if i % 10 == 0 && i != 0 {
-                self.duration.push(start.elapsed());
-                start = Instant::now();
-            }
+        for _i in 0..runs {
 
             let u: f32 = rand::rng().random();
             let res = match u {
@@ -83,9 +84,17 @@ impl<'a> ETC<'a> {
                     println!("Code: {code}");
                 }
             }
+
+            // Time batches of 10
+            // if i % 10 == 0 && i != 0 {
+                self.duration.push(start.elapsed());
+                start = Instant::now();
+            // }
+
         }
     }
 
+    /// Execute a redis CMD and add +1 to the respective counter
     fn query_and_log(&mut self, cmd: SupportedCMDs) -> RedisResult<redis::Value> {
         let lg = &mut self.load_generator;
 
@@ -98,13 +107,22 @@ impl<'a> ETC<'a> {
 
         match cmd {
             SupportedCMDs::GET => {
-                lg.cmd_get().query::<redis::Value>(self.con)
+                let mut start = std::time::Instant::now();
+                let ret = lg.cmd_get().query::<redis::Value>(self.con);
+                self.dur_get + start.elapsed();
+                ret
             },
             SupportedCMDs::SET => {
-                lg.cmd_set().query::<redis::Value>(self.con)
+                let mut start = std::time::Instant::now();
+                let ret = lg.cmd_set().query::<redis::Value>(self.con);
+                self.dur_set + start.elapsed();
+                ret
             }
             SupportedCMDs::DEL => {
-                lg.cmd_del().query::<redis::Value>(self.con)
+                let mut start = std::time::Instant::now();
+                let ret = lg.cmd_del().query::<redis::Value>(self.con);
+                self.dur_del + start.elapsed();
+                ret
             }
         }
     }
