@@ -9,7 +9,7 @@ use redis::RedisResult;
 use std::collections::HashMap;
 use hdrhistogram::Histogram;
 
-use crate::{load_generator::etc_load::EtcLoadGenerator, test_case::case::{Case, Timing}};
+use crate::{load_generator::etc_load::EtcLoadGenerator, test_case::case::{Case, ResultHistogram, Timing}};
 
 /// Percentage of GET requests
 const ETC_PERC_GET: f32 = 21_000 as f32 / 30_000 as f32;
@@ -84,13 +84,6 @@ impl<'a> ETC<'a> {
                     println!("Code: {code}");
                 }
             }
-
-            // Time batches of 10
-            // if i % 10 == 0 && i != 0 {
-                self.duration.push(start.elapsed());
-                start = Instant::now();
-            // }
-
         }
     }
 
@@ -105,23 +98,23 @@ impl<'a> ETC<'a> {
             self.ratio.insert(cmd.clone(), 1);
         }
 
+        let start = std::time::Instant::now();
         match cmd {
             SupportedCMDs::GET => {
-                let mut start = std::time::Instant::now();
                 let ret = lg.cmd_get().query::<redis::Value>(self.con);
-                self.dur_get + start.elapsed();
+                let _ = self.dur_get.record(start.elapsed().as_micros() as u64);
                 ret
             },
             SupportedCMDs::SET => {
-                let mut start = std::time::Instant::now();
                 let ret = lg.cmd_set().query::<redis::Value>(self.con);
-                self.dur_set + start.elapsed();
+
+                let _ = self.dur_set.record(start.elapsed().as_micros() as u64);
                 ret
             }
             SupportedCMDs::DEL => {
-                let mut start = std::time::Instant::now();
                 let ret = lg.cmd_del().query::<redis::Value>(self.con);
-                self.dur_del + start.elapsed();
+
+                let _ = self.dur_del.record(start.elapsed().as_micros() as u64);
                 ret
             }
         }
@@ -146,5 +139,16 @@ impl<'a> ETC<'a> {
             timings.push(t);
         }
         timings
+    }
+}
+
+impl ResultHistogram for ETC<'_> {
+    fn get_histograms(&self) -> HashMap<String, hdrhistogram::Histogram<u64>> {
+        let mut ret = HashMap::<String, hdrhistogram::Histogram<u64>>::new();
+        ret.insert(String::from("GET"), self.dur_get.clone());
+        ret.insert(String::from("SET"), self.dur_set.clone());
+        ret.insert(String::from("DEL"), self.dur_del.clone());
+        
+        ret
     }
 }

@@ -2,6 +2,8 @@ use std::path::PathBuf;
 use std::thread;
 use std::time::Duration;
 
+use std::collections::HashMap;
+
 // Pretty print timings
 use pretty_duration::pretty_duration;
 
@@ -15,11 +17,10 @@ use clap::Parser;
 mod load_generator;
 use crate::load_generator::etc_load::EtcLoadGenerator;
 use crate::load_generator::load_generator::LoadGenerator;
-use crate::test_case::case::write_results;
+use crate::test_case::case::{ResultHistogram, create_csv, write_histograms, write_results};
 use crate::test_case::get_only::GetOnly;
 use crate::test_case::set_only::SetOnly;
 use crate::test_case::etc::ETC;
-
 
 // Get test cases
 mod test_case;
@@ -114,6 +115,10 @@ fn main() {
 
             // Somehow need to save both types Connection and ClusterConnection in same variable
             let mut con: Box<dyn redis::ConnectionLike>;
+
+            // Collect measurements
+            let mut histograms = HashMap::<String, hdrhistogram::Histogram<u64>>::new();
+
             if args.cluster {
                 println!("Running in cluster mode!");
                 let client = redis::cluster::ClusterClient::new(addr).unwrap();
@@ -149,24 +154,33 @@ fn main() {
                 let mut etc_lg = EtcLoadGenerator::new();
                 let mut etc = ETC::new(&mut *con, &mut etc_lg, "./hallo".into());
                 etc.execute((args.requests / args.threads));
-                let _ = etc.get_timings();
+                // let _ = etc.get_timings();
+                histograms.extend(etc.get_histograms());
             }
+
+            return histograms;
 
         });
         handles.push(handle);
     }
 
-    let mut timings = vec![];
-    for handle in handles {
-        &mut handle.join().unwrap();
-        // timings.append(&mut handle.join().unwrap());
-    }
-
     let total = pretty_duration(&start.elapsed(), None);
-
     println!("Done! Took {total}");
 
-    if !args.skip_logs {
-        write_results(&PathBuf::from("./target/"), timings);
+    let mut file = create_csv("histogram", &PathBuf::from("./target/")).unwrap();
+    let mut sum = 0;
+    println!("Total handles: {}", handles.len());
+    for (id, handle) in handles.into_iter().enumerate() {
+        let histograms = handle.join().unwrap();
+        for v in histograms.values() {
+            sum += v.len();
+        }
+        write_histograms(&mut file, histograms.clone(), id);
     }
+    println!("Entries: {sum}")
+
+    // let mut timings = vec![];
+    // if !args.skip_logs {
+    //     write_results(&PathBuf::from("./target/"), timings);
+    // }
 }
