@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 
 folders = sys.argv[1:]
 dfs = []
+
+# Collect csv from given folders
 for folder in folders:
     service = os.path.dirname(folder)
     files = glob.glob(f"{folder}/*.csv")
@@ -17,16 +19,24 @@ for folder in folders:
         df = pd.read_csv(file, comment="#")
         df["service"] = service
         df["node"] = file
+        # "Explode" csv. Repeat each latency 'count' times.
+        df = df.loc[df.index.repeat(df['count'])]
+        print(f"{file} has {len(df)} entries")
+
         dfs.append(df)
 
+# Combine all dataframe into one
 df = pd.concat(dfs, ignore_index=True)
 
 print("=== BY SERVICE ===")
+plt.figure(figsize=(10, 6))
+sns.boxplot(x="service", y="latency", data=df)
+plt.show()
 
 print("=== BY NODE ===")
-print(df.groupby(["Node"]).describe())
+print(df.groupby(["node"]).describe())
 plt.figure(figsize=(10, 6))
-sns.boxplot(x="Node", y="latency", data=df)
+sns.boxplot(x="node", y="latency", data=df)
 plt.show()
 
 print("\n=== BY CMD ===")

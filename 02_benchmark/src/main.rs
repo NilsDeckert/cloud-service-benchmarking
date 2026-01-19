@@ -169,15 +169,17 @@ fn main() {
 
     let mut file = create_csv("histogram", &PathBuf::from("./target/")).unwrap();
     let mut sum = 0;
+    let mut written = 0;
     println!("Total handles: {}", handles.len());
     for (id, handle) in handles.into_iter().enumerate() {
         let histograms = handle.join().unwrap();
         for v in histograms.values() {
             sum += v.len();
         }
-        write_histograms(&mut file, histograms.clone(), id);
+        written += write_histograms(&mut file, histograms.clone(), id);
     }
-    println!("Entries: {sum}")
+    println!("Entries: {sum}");
+    println!("Actually written: {written}");
 
     // let mut timings = vec![];
     // if !args.skip_logs {

@@ -1,3 +1,4 @@
+use core::panic;
 use std::{collections::HashMap, fs::File, io::Write, path::PathBuf};
 
 use chrono::Local;
@@ -52,27 +53,30 @@ pub fn write_results(path: &PathBuf, timings: Vec<Timing>) {
 }
 
 /// Write to csv
-pub fn write_histograms(file: &mut File, histograms: HashMap<String, hdrhistogram::Histogram<u64>>, id: usize) {
+/// thread, cmd, latency, count
+/// 0, GET, 42, 5
+pub fn write_histograms(file: &mut File, histograms: HashMap<String, hdrhistogram::Histogram<u64>>, id: usize) -> u64 {
     if file.metadata().unwrap().len() == 0 {
         writeln!(file, "# Args: {:?}", std::env::args().collect::<Vec<_>>()).unwrap();
-        let _ = csv::Writer::from_writer(&mut *file).write_record(&["thread", "cmd", "latency"]);
+        let _ = csv::Writer::from_writer(&mut *file).write_record(&["thread", "cmd", "latency", "count"]);
     }
 
     let mut wtr = csv::Writer::from_writer(file);
 
     let mut sum = 0;
     for (cmd, histogram) in histograms.iter() {
-        println!("{cmd}: {}", histogram.len());
-        let mut cmd_sum = 0;
-        for latency in histogram.iter_all() {
-            let w = wtr.write_record(&[id.to_string(), cmd.to_string(), latency.value_iterated_to().to_string()]);
-            match w {
-                Ok(()) => { cmd_sum += 1 },
-                Err(e) => { println!("Error writing to file: {:?}", e.kind()) }
-            }
+        for record in histogram.iter_recorded() {
+            let latency = record.value_iterated_to();
+            let count = record.count_at_value();
+            wtr.write_record(&[
+                id.to_string(),
+                cmd.to_string(),
+                latency.to_string(),
+                count.to_string()
+            ]).unwrap();
+            sum += count;
         }
-        println!("Sum for {cmd}: {cmd_sum}");
-        sum += cmd_sum;
     }
-    println!("Wrote {sum} entries to file");
+
+    return sum;
 }
