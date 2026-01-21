@@ -32,7 +32,7 @@ const NUM_REQ: usize = 10_000;
 const ADDR: &str = "localhost";
 const KEY_LEN_MIN: u32 = 0;
 const VAL_LEN_MIN: u32 = 0;
-const KEY_LEN_MAX: u32 = 1000;
+const KEY_LEN_MAX: u32 = 100;
 const VAL_LEN_MAX: u32 = 1000;
 
 // --------------------------------- \\
@@ -88,9 +88,51 @@ fn test_connection(client: &redis::Client, name: &str) -> RedisResult<redis::Con
     Ok(con)
 }
 
+/// Given an address, initiate a connection for either single-node or cluster setups
+fn init_connection(addr: &Vec<String>, cluster: bool) -> Box<dyn redis::ConnectionLike> {
+    let con: Box<dyn redis::ConnectionLike>;
+
+    if cluster {
+        println!("Running in cluster mode!");
+        let client = redis::cluster::ClusterClient::new(addr.clone()).unwrap();
+        let mut c = client.get_connection().unwrap();
+        c.check_connection();
+        con = Box::new(c);
+    } else {
+        let client = redis::Client::open(addr[0].clone()).expect("Failed to create client");
+        con = Box::new(test_connection(&client, "client").expect("Connection failed"));
+    }
+
+    con
+}
+
+/// Run some SET commands to warmup the instance
+fn run_warmup(addr: &Vec<String>, requests: usize, cluster: bool) {
+
+    println!("Running warm up...");
+    let mut con = init_connection(&addr, cluster);
+
+    let mut lg = LoadGenerator::new(
+        KEY_LEN_MIN,
+        KEY_LEN_MAX,
+        VAL_LEN_MIN,
+        VAL_LEN_MAX).expect("Error creating load generator");
+
+    println!("SET");
+    let mut set_only = SetOnly::new(&mut *con, &mut lg, "./hallo".into());
+    set_only.execute(requests);
+}
+
 #[allow(unused)]
 fn main() {
     let args = Args::parse();
+
+    let mut addr = vec![];
+    for s in &args.address {
+        addr.push(format!("redis://{}:{}", s, args.port));
+    }
+
+    run_warmup(&addr, args.requests / 10, args.cluster);
 
     println!(
         "Sending {} * {} requests to {:?}...",
@@ -106,29 +148,13 @@ fn main() {
     let etc = args.cmd.contains(&String::from("etc"));
 
     for i in 0..args.threads {
-        let mut addr = vec![];
-        for s in &args.address {
-            addr.push(format!("redis://{}:{}", s, args.port));
-        }
-
+        let addr_clone = addr.clone();
         let handle = thread::spawn(move || {
-
-            // Somehow need to save both types Connection and ClusterConnection in same variable
-            let mut con: Box<dyn redis::ConnectionLike>;
 
             // Collect measurements
             let mut histograms = HashMap::<String, hdrhistogram::Histogram<u64>>::new();
 
-            if args.cluster {
-                println!("Running in cluster mode!");
-                let client = redis::cluster::ClusterClient::new(addr).unwrap();
-                let mut c = client.get_connection().unwrap();
-                c.check_connection();
-                con = Box::new(c);
-            } else {
-                let client = redis::Client::open(addr[0].clone()).expect("Failed to create client");
-                con = Box::new(test_connection(&client, "client").expect("Connection failed"));
-            }
+            let mut con: Box<dyn redis::ConnectionLike> = init_connection(&addr_clone, args.cluster);
 
             let mut lg = LoadGenerator::new(
                 KEY_LEN_MIN,
