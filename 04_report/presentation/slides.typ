@@ -71,7 +71,6 @@
       dx: -5pt,
       cite(label("emg25template"))
     )
-  @emg25template
 ]
 
 #slide(title: [First Slide])[
