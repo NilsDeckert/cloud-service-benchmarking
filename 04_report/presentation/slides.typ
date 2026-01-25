@@ -52,12 +52,29 @@
  
 #title-slide()
 
+#section-slide(title:"Benchmark Design")
+
 #slide(title: [Cache Hits])[
   #quote-block[
     How many GET requests can be served?
   ]
 
-  #text(weight: "bold", "Hit Rate:") 81%
+  #text(weight: "bold", "Hit Rate:") 81,4%
+
+  #table(columns:6, table.header(
+    [*Pool*],
+    "APP",
+    "VAR",
+    "SYS",
+    "USR",
+    [*ETC*],
+    [*Hit rate*],
+    "92.9%",
+    "93.7%",
+    "98.7%",
+    "98.2%",
+    [*81.4*]
+  ))
 
   #quote-block[
     Why are keys missing?
@@ -69,13 +86,39 @@
   #place(
       bottom + right,
       dx: -5pt,
-      cite(label("emg25template"))
+      cite(label("atikogluWorkloadAnalysisLargeScale2012"))
     )
 ]
 
+#section-slide(title: "Benchmark results")
+
+#slide(title: "Validate Results")[
+  #image("./images/acdis_latency_by_command.png")
+]
+
+#slide(title: "Redis - Latency by command")[
+  #image("./images/redis_latency_by_command.png")
+]
+
+#slide(title: "Valkey - Latency by command")[
+  #image("./images/valkey_latency_by_command.png")
+]
+
+#slide(title: "KeyDB - Latency by command")[
+  #image("./images/keydb_latency_by_command.png")
+]
+
+#slide(title: "Acdis - Latency by command")[
+  #image("./images/acdis_latency_by_command.png")
+]
+
+#slide(title: "Latency by Application")[
+]
+
+
 #slide(title: [First Slide])[
   #quote-block[
-    Good luck with your presentation! @emg25template
+    Good luck with your presentation!
   ]
 
   #color-block(title: "Mein title")[
@@ -86,5 +129,5 @@
 ]
 
 #slide(title: [Bibliography])[
-  #bibliography("bibliography.bib")
+  #bibliography("refs.bib")
 ]
