@@ -22,11 +22,40 @@
     path: /etc/keydb/keydb.conf
     regexp: '^bind '
     line: 'bind 0.0.0.0'
-  notify: Restart keydb
 
 - name: Disable protected mode
   ansible.builtin.lineinfile:
     path: /etc/keydb/keydb.conf
     regexp: '^protected-mode '
     line: 'protected-mode no'
-  notify: Restart keydb
+
+- name: Disable RDB persistence (snapshots)
+  ansible.builtin.lineinfile:
+    path: /etc/keydb/keydb.conf
+    regexp: '^save'
+    line: 'save ""'
+
+- name: Disable AOF persistence
+  ansible.builtin.lineinfile:
+    path: /etc/keydb/keydb.conf
+    regexp: '^appendonly '
+    line: 'appendonly no'
+
+# These settings to not exist for keydb
+# - name: Enable multi-thread
+#   ansible.builtin.lineinfile:
+#     path: /etc/keydb/keydb.conf
+#     regexp: '^io-threads'
+#     line: 'io-threads 3'
+#
+# - name: Use threads for reading
+#   ansible.builtin.lineinfile:
+#     path: /etc/keydb/keydb.conf
+#     regexp: '^io-threads-do-reads'
+#     line: 'io-threads-do-reads yes'
+
+- name: Restart service
+  ansible.builtin.service:
+    name: keydb-server
+    state: restarted
+    enabled: true

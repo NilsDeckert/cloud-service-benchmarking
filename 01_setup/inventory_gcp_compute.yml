@@ -1,6 +1,6 @@
 plugin: google.cloud.gcp_compute
 zones:
-  - "europe-west9-b"
+  - "europe-north2-a"
 projects:
   - "ace-wording-477310-h0"
 auth_kind: serviceaccount

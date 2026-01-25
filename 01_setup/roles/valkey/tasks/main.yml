@@ -42,3 +42,9 @@
     path: /etc/valkey/valkey.conf
     regexp: '^io-threads-do-reads'
     line: 'io-threads-do-reads yes'
+
+- name: Start service
+  ansible.builtin.service:
+    name: valkey-server
+    state: restarted
+    enabled: true

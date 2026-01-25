@@ -13,17 +13,15 @@
     machine_type: "n4-highcpu-4" # TODO
     ubuntu_2204: "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20251203"
     ubuntu_2404: "projects/ubuntu-os-cloud/global/images/ubuntu-2404-noble-amd64-v20251121"
-    zone: "europe-west9-b"
+    zone: "europe-north2-a" # Choosing this region, since n4 cpu limit is 72 instead of 24
     machines:
-      - "Valkey1"
-      - "Valkey2"
-      - "Valkey3"
+      # - "Redis" # 1
+      # - "Valkey" # 2
+      # - "KeyDB" # 3
+      - "Acdis" # 4
       - "Bench1"
-      # - "Bench2"
-      # - "Bench3"
-      # - "Acdis"
-      # - "Redis"
-      # - "KeyDB"
+      - "Bench2"
+      - "Bench3"
 
   tasks:
     - name: Create instance

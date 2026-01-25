@@ -41,8 +41,8 @@
   tasks:
     - name: Import valkey tasks
       ansible.builtin.import_tasks: ./roles/valkey/tasks/main.yml
-    - name: Configure cluster
-      ansible.builtin.import_tasks: ./roles/valkey/tasks/cluster.yml
+    # - name: Configure cluster
+    #   ansible.builtin.import_tasks: ./roles/valkey/tasks/cluster.yml
 
 - name: Configure acdis
   hosts: acdis

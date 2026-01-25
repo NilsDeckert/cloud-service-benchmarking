@@ -4,6 +4,6 @@
   gather_facts: false
   vars:
     gcp_project: "ace-wording-477310-h0"
-    gcp_zone: "europe-west9-b"
+    gcp_zone: "europe-north2-a"
   roles:
     - role: gcp_stop_vms

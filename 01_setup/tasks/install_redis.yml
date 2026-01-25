@@ -22,12 +22,39 @@
     path: /etc/redis/redis.conf
     regexp: '^bind '
     line: 'bind 0.0.0.0'
-  notify: Restart redis
 
-# NEW: Disable protected mode. Without this, Redis blocks external connections if no password is set.
 - name: Disable protected mode
   ansible.builtin.lineinfile:
     path: /etc/redis/redis.conf
     regexp: '^protected-mode '
     line: 'protected-mode no'
-  notify: Restart redis
+
+- name: Disable RDB persistence (snapshots)
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^save'
+    line: 'save ""'
+
+- name: Disable AOF persistence
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^appendonly '
+    line: 'appendonly no'
+
+- name: Enable multi-thread
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^io-threads'
+    line: 'io-threads 3' # redis recommends cores - 1
+
+- name: Use threads for reading
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^io-threads-do-reads'
+    line: 'io-threads-do-reads yes'
+
+- name: Restart service
+  ansible.builtin.service:
+    name: redis-server
+    state: restarted
+    enabled: true
