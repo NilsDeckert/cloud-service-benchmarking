@@ -15,10 +15,18 @@
     ubuntu_2404: "projects/ubuntu-os-cloud/global/images/ubuntu-2404-noble-amd64-v20251121"
     zone: "europe-north2-a" # Choosing this region, since n4 cpu limit is 72 instead of 24
     machines:
-      # - "Redis" # 1
-      # - "Valkey" # 2
-      # - "KeyDB" # 3
-      - "Acdis" # 4
+#      - "Redis1" # 1
+#      - "Redis2" # 1
+#      - "Redis3" # 1
+#      - "Valkey1" # 2
+#      - "Valkey2" # 2
+#      - "Valkey3" # 2
+#      - "KeyDB1" # 3
+#      - "KeyDB2" # 3
+#      - "KeyDB3" # 3
+      - "Acdis1" # 4
+      - "Acdis2" # 4
+      - "Acdis3" # 4
       - "Bench1"
       - "Bench2"
       - "Bench3"
@@ -32,7 +40,7 @@
           - auto_delete: true
             boot: true
             initialize_params:
-              source_image: "{{ ubuntu_2204 if item == 'KeyDB' else ubuntu_2404 }}"
+              source_image: "{{ ubuntu_2204 if item.startswith('KeyDB') else ubuntu_2404 }}"
         network_interfaces:
           - network:
               name: "default"

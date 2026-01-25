@@ -12,11 +12,13 @@
         cmd: "sudo bash /tmp/add-gcp-agent.sh --also-install"
 
 - name: Configure redis node
-  hosts: redis
+  hosts: redis*
   become: yes
   tasks:
     - name: Import redis tasks
       ansible.builtin.import_tasks: ./tasks/install_redis.yml
+    - name: Configure cluster
+      ansible.builtin.import_tasks: ./roles/redis/tasks/cluster.yml
   handlers:
     - name: Restart redis
       ansible.builtin.service:
@@ -24,11 +26,13 @@
         state: restarted
 
 - name: Configure keydb
-  hosts: keydb
+  hosts: keydb*
   become: yes
   tasks:
     - name: Import keydb tasks
       ansible.builtin.import_tasks: ./tasks/install_keydb.yml
+    - name: Configure cluster
+      ansible.builtin.import_tasks: ./roles/keydb/tasks/cluster.yml
   handlers:
     - name: Restart keydb
       ansible.builtin.service:
@@ -41,11 +45,11 @@
   tasks:
     - name: Import valkey tasks
       ansible.builtin.import_tasks: ./roles/valkey/tasks/main.yml
-    # - name: Configure cluster
-    #   ansible.builtin.import_tasks: ./roles/valkey/tasks/cluster.yml
+    - name: Configure cluster
+      ansible.builtin.import_tasks: ./roles/valkey/tasks/cluster.yml
 
 - name: Configure acdis
-  hosts: acdis
+  hosts: acdis*
   become: yes
   tasks:
     - name: Import acdis tasks

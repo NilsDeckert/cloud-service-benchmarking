@@ -4,8 +4,7 @@ After=network-online.target
 Wants=network-online.target systemd-networkd-wait-online.service
 
 [Service]
-ExecStart=/opt/acdis/acdis
+ExecStart=/opt/acdis/{{ acdis_bin }}
 
 [Install]
 WantedBy=multi-user.target
-

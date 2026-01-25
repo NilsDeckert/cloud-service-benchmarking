@@ -29,8 +29,12 @@
     version: main
     force: true
 
+- name: Set `acdis_bin` based on hostname
+  ansible.builtin.set_fact:
+    acdis_bin: "{{ 'node' if (ansible_hostname | regex_search('^acdis[2-9][0-9]*$')) else 'acdis' }}"
+
 - name: Build acdis binary
-  ansible.builtin.command: "{{ ansible_user_dir }}/.cargo/bin/cargo build --release"
+  ansible.builtin.command: "{{ ansible_user_dir }}/.cargo/bin/cargo build --release --bin {{ acdis_bin }}"
   args:
     chdir: "{{ ansible_user_dir }}/acdis"
 
@@ -45,7 +49,7 @@
 
 - name: Copy binary to /opt/acdis
   ansible.builtin.copy:
-    src: "{{ ansible_user_dir }}/acdis/target/release/acdis"
+    src: "{{ ansible_user_dir }}/acdis/target/release/{{ acdis_bin }}"
     dest: "/opt/acdis/acdis"
     mode: "0755" # Executable, but not writable by everyone
     remote_src: true
@@ -53,14 +57,13 @@
     group: root
   become: true
 
-- name: Copy unit file
-  ansible.builtin.copy:
-    src: "../files/acdis.service"
+- name: Upload unit file
+  ansible.builtin.template:
+    src: "../files/acdis.service.js"
     dest: "/etc/systemd/system/acdis.service"
-    mode: "0644"
+    mode: '0755'
     owner: root
     group: root
-  become: true
 
 - name: Enable & start acdis service
   ansible.builtin.systemd_service:
