@@ -8,6 +8,12 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 folders = sys.argv[1:]
+output = "images/" + folders[0].split("/")[0]
+
+# If the output folder does not exist, create it
+if not os.path.exists(output):
+    os.makedirs(output)
+
 dfs = []
 
 # Collect csv from given folders
@@ -36,7 +42,7 @@ for folder in folders:
     plt.figure(figsize=(10, 6))
     boxplot = sns.boxplot(x="cmd", y="latency", data=df, showfliers=False)
     boxplot.set_title(f"Latency by command {service}")
-    plt.savefig(f"images/{service}_latency_by_command.png")
+    plt.savefig(f"{output}/{service}_latency_by_command.png")
     plt.close()
 
 # Combine all dataframe into one
@@ -47,14 +53,14 @@ print("=== BY SERVICE ===")
 plt.figure(figsize=(10, 6))
 summary = sns.boxplot(x="service", y="latency", data=df, showfliers=False)
 summary.set_title("Combined latency per service")
-plt.savefig("images/summary_latency.png")
+plt.savefig(f"{output}/summary_latency.png")
 plt.close()
 
 print("=== BY BENCHER ===")
 print(df.groupby(["node"]).describe())
 plt.figure(figsize=(10, 6))
 validation = sns.boxplot(x="node", y="latency", data=df, showfliers=False)
-plt.savefig("images/validation_bencher.png")
+plt.savefig(f"{output}/validation_bencher.png")
 plt.close()
 
 # print("\n=== BY CMD ===")
