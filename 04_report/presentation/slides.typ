@@ -1,5 +1,7 @@
 #import "@preview/definitely-not-isec-slides:1.0.1": *
 
+#let primary_color = rgb("#C50E1F")
+
 #show: definitely-not-isec-theme.with(
   aspect-ratio: "16-9",
   slide-alignment: top,
@@ -21,9 +23,17 @@
     handout: false,
   ),
   config-colors(
-      primary: rgb("#C50E1F"),
+      primary: primary_color,
   ),
 )
+
+#let cite_bottom(lbl: "atikogluWorkloadAnalysisLargeScale2012") = {
+  place(
+      bottom + right,
+      dx: -5pt,
+      cite(label(lbl))
+    )
+}
 
 // -------------------------------[[ CUT HERE ]]--------------------------------
 //
@@ -53,6 +63,82 @@
 #title-slide()
 
 #section-slide(title:"Benchmark Design")
+
+#slide(title: "\"Workload Analysis of a Large-Scale Key-Value Store\"")[
+  - Traces from Facebooks Memcached deployment
+  - Five different pools
+  - 284 billion requests
+  - Provide statistical model to generate realistic benchmarking data
+
+  #v(7em)
+
+  #color-block(title: [Workload Analysis of a Large-Scale Key-Value Store \[Ati+12\]])[
+    #cite(label("atikogluWorkloadAnalysisLargeScale2012"), form: "author")
+  ]
+]
+
+#slide(title: "Sampled pools")[
+
+  #table(
+    columns: (20%, 80%),
+    fill: (col, row) => if row == 3 { primary_color.lighten(90%) } else { none },
+  )[*Pool*][*Description*][
+    USR][user-account status information][
+    APP][object metadata of one application][
+    ETC][nonspecific, general-purpose][
+    VAR][server-side browser information][
+    SYS][system data on service location]
+
+  #note("ETC is used as a general cache by multiple applications and is the largest of the pools")
+
+  #cite_bottom()
+]
+
+#slide(title: "Distribution of request types")[
+  #table(
+    columns: (30%, 20%, 20%, 20%),
+    fill: (col, row) => if row == 3 { primary_color.lighten(90%) } else { none },
+  )[*Pool*][*GET*][
+    *SET*#footnote("This includes all non-delete writing. E.g. SET, REPLACE, etc.")][
+      *DELETE*][
+   USR][>99.8%][\<0.1%][\<0.1%][
+   APP][\~84%][\~4%][\~12%][
+   ETC][\~70%][\~5%][\~25%][
+   VAR][\~18%][\~82%][-][
+   SYS][\~67%][\~33%][-]
+
+   #note("The values here are only approximations, because the paper did not list exact values, only showed a graph.")
+
+   #cite_bottom()
+]
+
+#slide(title: "Request sizes")[
+
+  - `APP`: 
+    - 90% of keys 31 bytes long
+    - 30% of `SET` values are 270 bytes long
+  - `USR`:
+    - Only two key sizes: 16 bytes
+    - One value size: 2 bytes
+  - `ETC`:
+    - Most heterogeneous
+    - Requests with 2, 3 & 11 byte values equal ~40%
+
+  #cite_bottom()
+]
+
+#slide(title: "ETC: Key length")[
+    #figure(caption: "Distribution of key sizes (ETC)")[
+      #image("graph_code/etc_key_size.png")
+    ]
+]
+
+#slide(title: "ETC: Value size")[
+    #figure(caption: "Distribution of value sizes (ETC)")[
+      #image("graph_code/etc_value_size.png")
+    ]
+]
+
 
 #slide(title: [Cache Hits])[
   #quote-block[
