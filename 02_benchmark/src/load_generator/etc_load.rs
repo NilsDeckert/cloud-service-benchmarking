@@ -95,7 +95,7 @@ impl EtcLoadGenerator {
         // There aren't really packages that provide a generalized pareto distribution,
         // so we'll go with this approach found on wikipedia
         // https://en.wikipedia.org/wiki/Generalized_Pareto_distribution#Generating_GPD_random_variables
-        let x = gpd_theta + ((gpd_sigma * ((v.powf(gpd_k) - 1.)))/gpd_k);
+        let x = gpd_theta + ((gpd_sigma * ((v.powf(-gpd_k) - 1.)))/gpd_k);
 
         // The model starts from 15, so the GPD value is the offset FROM 15.
         let final_len = 15.0 + x;
