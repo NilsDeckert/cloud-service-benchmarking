@@ -9,24 +9,29 @@
   gather_facts: false
   vars:
     project: "ace-wording-477310-h0"
-    # machine_type: "e2-micro" # TODO
-    machine_type: "n4-highcpu-4" # TODO
+    machine_type: "n4-highcpu-4"
     ubuntu_2204: "projects/ubuntu-os-cloud/global/images/ubuntu-2204-jammy-v20251203"
     ubuntu_2404: "projects/ubuntu-os-cloud/global/images/ubuntu-2404-noble-amd64-v20251121"
     zone: "europe-north2-a" # Choosing this region, since n4 cpu limit is 72 instead of 24
     machines:
-#      - "Redis1" # 1
-#      - "Redis2" # 1
-#      - "Redis3" # 1
-#      - "Valkey1" # 2
-#      - "Valkey2" # 2
-#      - "Valkey3" # 2
-#      - "KeyDB1" # 3
-#      - "KeyDB2" # 3
-#      - "KeyDB3" # 3
-      - "Acdis1" # 4
-      - "Acdis2" # 4
-      - "Acdis3" # 4
+      # - "Redis1" # 1
+      # - "Redis2" # 1
+      # - "Redis3" # 1
+      # - "Redis4" # 1
+      # - "Redis5" # 1
+      # - "Valkey1" # 2
+      # - "Valkey2" # 2
+      # - "Valkey3" # 2
+      # - "Valkey4" # 2
+      # - "Valkey5" # 2
+      - "KeyDB1" # 3
+      - "KeyDB2" # 3
+      - "KeyDB3" # 3
+      - "KeyDB4" # 3
+      - "KeyDB5" # 3
+      # - "Acdis1" # 4
+      # - "Acdis2" # 4
+      # - "Acdis3" # 4
       - "Bench1"
       - "Bench2"
       - "Bench3"
