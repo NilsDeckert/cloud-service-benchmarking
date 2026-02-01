@@ -66,7 +66,11 @@ struct Args {
 
     /// Flag to disable writing result csv
     #[arg(long)]
-    skip_logs: bool
+    skip_logs: bool,
+
+    /// Name of the output file
+    #[arg(short, long, default_value_t=String::from("histogram"))]
+    output: String,
 }
 
 /// Open connection, send ping command. Return connection
@@ -193,7 +197,7 @@ fn main() {
     let total = pretty_duration(&start.elapsed(), None);
     println!("Done! Took {total}");
 
-    let mut file = create_csv("histogram", &PathBuf::from("./target/")).unwrap();
+    let mut file = create_csv(&args.output, &PathBuf::from("./target/")).unwrap();
     let mut sum = 0;
     let mut written = 0;
     println!("Total handles: {}", handles.len());

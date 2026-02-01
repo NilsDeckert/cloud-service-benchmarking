@@ -8,7 +8,8 @@
   tasks:
     - name: Run benchmark
       ansible.builtin.shell: 
-        cmd: "sudo /opt/benchmarker/benchmark -a {{ target_ip }} -c etc -r 20000000 -t 32 --cluster"
+        cmd: "sudo /opt/benchmarker/benchmark -a {{ target_ip }} -c etc -r 20000000 -t 32 -o {{ output_file }}"
+        # cmd: "sudo /opt/benchmarker/benchmark -a {{ target_ip }} -c etc -r 20000000 -t 32 --cluster"
 
     - name: Find csv
       find:

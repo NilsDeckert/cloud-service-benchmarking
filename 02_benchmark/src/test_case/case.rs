@@ -29,7 +29,7 @@ pub trait Case<'a> {
 
 pub fn create_csv(base: &str, dir: &PathBuf) -> Result<File, std::io::Error> {
     // Make sure we choose a unique file name
-    let mut name = Local::now().format("%Y-%m-%d").to_string() + "_" + &base;
+    let mut name = &base;
     let mut mb_f = File::create_new(dir.join(format!("{name}.csv")));
 
     while mb_f.is_err() {
