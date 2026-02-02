@@ -37,7 +37,7 @@ impl<'a> Case<'a> for SetOnly<'a> {
             }
             let res = lg.cmd_set().query::<redis::Value>(self.con);
             if let Err(e) = res {
-                println!("Error: {}", e.category());
+                println!("[SET] Error: {}", e.category());
                 if let Some(detail) = e.detail() {
                     println!("Details: {detail}");
                 }

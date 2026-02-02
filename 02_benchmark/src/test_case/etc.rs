@@ -76,7 +76,7 @@ impl<'a> ETC<'a> {
             };
 
             if let Err(e) = res {
-                println!("Error: {}", e.category());
+                println!("[ETC] Error: {}", e.category());
                 if let Some(detail) = e.detail() {
                     println!("Details: {detail}");
                 }

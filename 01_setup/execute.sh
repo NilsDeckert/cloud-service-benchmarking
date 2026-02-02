@@ -9,11 +9,11 @@ source hosts.env
 # --- 1. Validation Step ---
 # Array of required environment variables
 REQUIRED_VARS=(
-    "HOST_KEYDB1_IP"
-    "HOST_KEYDB2_IP"
-    "HOST_KEYDB3_IP"
-    "HOST_KEYDB4_IP"
-    "HOST_KEYDB5_IP"
+    "HOST_ACDIS1_IP"
+    "HOST_ACDIS2_IP"
+    "HOST_ACDIS3_IP"
+    "HOST_ACDIS4_IP"
+    "HOST_ACDIS5_IP"
 )
 
 echo "Checking environment variables..."
@@ -52,68 +52,103 @@ create_cluster() {
 
 # --- 3. Execute Scenarios ---
 
-redis-cli --cluster create $HOST_KEYDB1_IP:7000 $HOST_KEYDB2_IP:7000 $HOST_KEYDB3_IP:7000 $HOST_KEYDB4_IP:7000 $HOST_KEYDB5_IP:7000 --cluster-replicas 0 --cluster-yes
+if [[ "$REQUIRED_VARS[0]" != *"ACDIS"* ]]; then
+  redis-cli --cluster create $HOST_ACDIS1_IP:7000 $HOST_ACDIS2_IP:7000 $HOST_ACDIS3_IP:7000 $HOST_ACDIS4_IP:7000 $HOST_ACDIS5_IP:7000 --cluster-replicas 0 --cluster-yes
+fi
 
 # Scenario: Five Nodes
-run_benchmark "keydb_five_nodes" "$HOST_KEYDB1_IP,$HOST_KEYDB2_IP,$HOST_KEYDB3_IP,$HOST_KEYDB4_IP,$HOST_KEYDB5_IP"
+run_benchmark "acdis_five_nodes" "$HOST_ACDIS1_IP,$HOST_ACDIS2_IP,$HOST_ACDIS3_IP,$HOST_ACDIS4_IP,$HOST_ACDIS5_IP"
 
-for node in ${REQUIRED_VARS[@]}; do
-  IP=${!node}
-  ssh -o StrictHostKeyChecking=No nils@$IP << 'EOF'
-    sudo systemctl stop keydb-cluster
-    sudo rm /home/nils/cluster/nodes.conf
-    sudo systemctl start keydb-cluster
+#------------------
+# Prepare Scanario Four nodes
+
+if [[ "$REQUIRED_VARS[0]" != *"ACDIS"* ]]; then
+  # Bring instances to clean state
+  for node in ${REQUIRED_VARS[@]}; do
+    IP=${!node}
+    ssh -o StrictHostKeyChecking=No nils@$IP << 'EOF'
+      sudo systemctl stop keydb-cluster
+      sudo rm /home/nils/cluster/nodes.conf
+      sudo systemctl start keydb-cluster
 EOF
-done
+  done
+else
+  # Stop the last node
+  ssh -o StrictHostKeyChecking=No nils@$REQUIRED_VARS[-1] "sudo systemctl stop acdis"
+  # Restart all others
+  for node in "${REQUIRED_VARS[@]:0:4}"; do
+    IP=${!node}
+    ssh -o StrictHostKeyChecking=No nils@$IP "sudo systemctl restart acdis"
+  done
+fi
 
 # Shutdown unused node to save money
-# ssh -o StrictHostKeyChecking=No nils@$HOST_KEYDB5_IP "sudo poweroff"
+# ssh -o StrictHostKeyChecking=No nils@$HOST_ACDIS5_IP "sudo poweroff"
 
 # Let cluster boot up
 sleep 3
 
-redis-cli --cluster create $HOST_KEYDB1_IP:7000 $HOST_KEYDB2_IP:7000 $HOST_KEYDB3_IP:7000 $HOST_KEYDB4_IP:7000 --cluster-replicas 0 --cluster-yes
+if [[ "$REQUIRED_VARS[0]" != *"ACDIS"* ]]; then
+  redis-cli --cluster create $HOST_ACDIS1_IP:7000 $HOST_ACDIS2_IP:7000 $HOST_ACDIS3_IP:7000 $HOST_ACDIS4_IP:7000 --cluster-replicas 0 --cluster-yes
+fi
 
 # Scenario: Four Nodes
-run_benchmark "keydb_four_nodes" "$HOST_KEYDB1_IP,$HOST_KEYDB2_IP,$HOST_KEYDB3_IP,$HOST_KEYDB4_IP"
+run_benchmark "acdis_four_nodes" "$HOST_ACDIS1_IP,$HOST_ACDIS2_IP,$HOST_ACDIS3_IP,$HOST_ACDIS4_IP"
+#------------------
+# Prepare Scenario Three Nodes
 
-for node in "${REQUIRED_VARS[@]:0:4}"; do
-  IP=${!node}
-  ssh -o StrictHostKeyChecking=No nils@$IP << 'EOF'
-    sudo systemctl stop keydb-cluster
-    sudo rm /home/nils/cluster/nodes.conf
-    sudo systemctl start keydb-cluster
+if [[ "$REQUIRED_VARS[0]" != *"ACDIS"* ]]; then
+  for node in "${REQUIRED_VARS[@]:0:4}"; do
+    IP=${!node}
+    ssh -o StrictHostKeyChecking=No nils@$IP << 'EOF'
+      sudo systemctl stop keydb-cluster
+      sudo rm /home/nils/cluster/nodes.conf
+      sudo systemctl start keydb-cluster
 EOF
-done
+  done
+else
+  ssh -o StrictHostKeyChecking=No nils@$REQUIRED_VARS[-1] "sudo systemctl stop acdis"
+  for node in "${REQUIRED_VARS[@]:0:3}"; do
+    IP=${!node}
+    ssh -o StrictHostKeyChecking=No nils@$IP "sudo systemctl restart acdis"
+  done
+fi
 
 # Shutdown unused node to save money
-# ssh -o StrictHostKeyChecking=No nils@$HOST_KEYDB4_IP "sudo poweroff"
+# ssh -o StrictHostKeyChecking=No nils@$HOST_ACDIS4_IP "sudo poweroff"
 
 # Let cluster boot up
 sleep 3
 
-redis-cli --cluster create $HOST_KEYDB1_IP:7000 $HOST_KEYDB2_IP:7000 $HOST_KEYDB3_IP:7000 --cluster-replicas 0 --cluster-yes
+redis-cli --cluster create $HOST_ACDIS1_IP:7000 $HOST_ACDIS2_IP:7000 $HOST_ACDIS3_IP:7000 --cluster-replicas 0 --cluster-yes
 
 # Scenario: Three Nodes
-run_benchmark "keydb_three_nodes" "$HOST_KEYDB1_IP,$HOST_KEYDB2_IP,$HOST_KEYDB3_IP"
+run_benchmark "acdis_three_nodes" "$HOST_ACDIS1_IP,$HOST_ACDIS2_IP,$HOST_ACDIS3_IP"
+#---------------------
+# Prepare single node benchmark
 
-for node in "${REQUIRED_VARS[@]:0:4}"; do
-  IP=${!node}
-  ssh -o StrictHostKeyChecking=No nils@$IP << 'EOF'
-    sudo systemctl stop keydb-cluster
-    sudo rm /home/nils/cluster/nodes.conf
-    sudo systemctl start keydb-server
+if [[ "$REQUIRED_VARS[0]" != *"ACDIS"* ]]; then
+  for node in "${REQUIRED_VARS[@]:0:3}"; do
+    IP=${!node}
+    ssh -o StrictHostKeyChecking=No nils@$IP << 'EOF'
+      sudo systemctl stop keydb-cluster
+      sudo rm /home/nils/cluster/nodes.conf
+      sudo systemctl start keydb-cluster
 EOF
-done
+  done
+else
+  ssh -o StrictHostKeyChecking=No nils@$REQUIRED_VARS[1] "sudo systemctl stop acdis"
+  ssh -o StrictHostKeyChecking=No nils@$REQUIRED_VARS[2] "sudo systemctl stop acdis"
+fi
 
 # Shutdown unused nodes to save money
-# ssh -o StrictHostKeyChecking=No nils@$HOST_KEYDB3_IP "sudo poweroff"
-# ssh -o StrictHostKeyChecking=No nils@$HOST_KEYDB2_IP "sudo poweroff"
+# ssh -o StrictHostKeyChecking=No nils@$HOST_ACDIS3_IP "sudo poweroff"
+# ssh -o StrictHostKeyChecking=No nils@$HOST_ACDIS2_IP "sudo poweroff"
 
 # Let cluster boot up
 sleep 3
 
 # Scenario: One Node
-run_benchmark "keydb_one_node" "$HOST_KEYDB1_IP"
+run_benchmark "acdis_one_node" "$HOST_ACDIS1_IP"
 
 echo "All benchmarks completed successfully."
