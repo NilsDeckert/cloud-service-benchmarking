@@ -18,6 +18,9 @@ You also have to install some python packages:
 pip install -r requirements.txt
 ```
 
+Make sure you can execute the `redis-cli` command.
+Depending on you Linux Distribution, you might have to install `redis-tools` or `redis`.
+
 ### GCP
 
 For authentication, we're using a service account and a downloaded credentials file.
