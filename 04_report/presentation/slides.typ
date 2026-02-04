@@ -176,10 +176,18 @@
 ]
 
 #slide(title: "SUTs")[
-  - Single instance
-  - Three node cluster
-  - Four node cluster
-  - Five node cluster
+  #grid(columns: (50%, 50%))[
+    == Clusters
+    - Single instance
+    - Three node cluster
+    - Four node cluster
+    - Five node cluster
+  ][
+    == Settings
+    - No replication
+    - No snapshots
+    - No persistence
+  ]
 
   #v(2em)
 
@@ -272,23 +280,17 @@
 //   #image("./images/acdis_latency_by_command.png")
 // ]
 
-#slide(title: "Latency by command")[
-  #grid(
-    columns: (50%, 50%),
-    rows: (50%, 50%),
-    [
-      #image("./images/redis_latency_by_command.png")
-      #image("./images/valkey_latency_by_command.png")
-    ],
-    [
-      #image("./images/keydb_latency_by_command.png")
-      #image("./images/acdis_latency_by_command.png")
-    ]
-  )
-  #note("Graphs are very small on purpose. Latency between the commands SET, GET, DELETE are very similar")
-]
 
-#let suts = ("redis", "valkey", "keydb", "acdis");
+#let suts = ("redis", "valkey", "keydb");
+
+#for sut in suts [
+  #let display_name = upper(sut.at(0)) + sut.slice(1)
+  #slide(title: "Latency by command - " + display_name)[
+    #align(center)[
+      #image("./images/5-nodes/" + sut + "_latency_by_command.png")
+    ]
+  ]
+]
 
 #for sut in suts [
   #let display_name = upper(sut.at(0)) + sut.slice(1)
@@ -299,14 +301,52 @@
   ]
 ]
 
-#slide(title: "Latency by cluster size")[
+#slide(title: "Median latency by cluster size")[
   #align(center)[
     #image("./images/barchart_latency.png")
   ]
 ]
 
-#slide(title: "Latency by Application")[
+#slide(title: "Minimum latency by cluster size")[
+  #align(center)[
+    #image("./images/barchart_Minium_latency.png")
+  ]
 ]
+
+#slide(title: "Maximum latency by cluster size")[
+  #align(center)[
+    #image("./images/barchart_Maximum_latency.png")
+  ]
+]
+
+#slide(title: "Latency Frequency - One Node")[
+  #v(2em)
+  #grid(columns: (auto, auto), column-gutter: 0em)[
+    #image("./images/1-nodes/keydb_latency_frequency.png", width: 110%)
+  ][
+    #image("./images/1-nodes/valkey_latency_frequency.png", width: 110%)
+  ]
+]
+
+#slide(title: "Latency Frequency - Three Nodes")[
+  #v(2em)
+  #grid(columns: (auto, auto), column-gutter: 0em)[
+    #image("./images/3-nodes/redis_latency_frequency.png", width: 110%)
+  ][
+    #image("./images/3-nodes/valkey_latency_frequency.png", width: 110%)
+  ]
+]
+
+#section-slide(title: "What about acdis?")
+
+#slide(title: "Memory allocation and fragmentation")[
+  #align(center)[
+    #image("./images/GCP_Memory.png")
+  ]
+]
+
+#slide()
+
 
 // #slide(title: [First Slide])[
 //   #quote-block[
