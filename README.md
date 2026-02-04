@@ -12,4 +12,4 @@ This repository contains setups to deploy the respective software projects to th
 | [03_analyze/](https://github.com/NilsDeckert/cloud-service-benchmarking/tree/main/03_analyze) | Python code to generate plots |
 | [04_report/](https://github.com/NilsDeckert/cloud-service-benchmarking/tree/main/04_report) | Typst code for final presentation and written report |
 
-![Latency Summary](./04_report/presentation/images/barchart_p50_latency.png)
+![Latency Summary](./03_analyze/images/barchart_p50_latency.png)
