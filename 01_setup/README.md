@@ -41,6 +41,7 @@ Make sure your SSH key is added to your gcp project.
 
 > [!NOTE]
 > You might want to do a search and replace to replace `nils` with your username.
+> E.g. `sed -i s/nils/myusername/g *`
 
 This project is set up to benchmark four key-value servers in clusters of different sizes.
 To configure the program and cluster size to test, edit the `01_create_instances.yml` playbook.
