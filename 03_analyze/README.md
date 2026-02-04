@@ -1,5 +1,7 @@
 # Analyze
 
+The data analysis is done in the `analyze.ipynb` Jupyter Notebook.
+
 These scripts read in multiple result files for each of the multiple benchmarked services.
 To facilitate this, we expect the following data structure:
 
