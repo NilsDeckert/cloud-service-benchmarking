@@ -1,3 +1,7 @@
+#########
+# Run this to stop all instances.
+# ! This does not delete them !
+#########
 ---
 - name: Stop all running GCP instances in a zone
   hosts: localhost

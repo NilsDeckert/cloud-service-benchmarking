@@ -1,0 +1,10 @@
+- name: Enable & start acdis service
+  ansible.builtin.systemd_service:
+    state: restarted
+    daemon_reload: true
+    name: acdis
+  become: true
+
+- name: Wait for nodes to come online
+  ansible.builtin.pause:
+    seconds: 5

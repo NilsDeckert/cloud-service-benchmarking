@@ -3,7 +3,6 @@
 # 
 # Related: https://developers.redhat.com/articles/2023/07/12/how-create-instance-gcp-using-ansible-cli#how_to_use_ansible_cli
 ##############
-
 - name: Create GCP instances
   hosts: localhost
   gather_facts: false
@@ -14,11 +13,13 @@
     ubuntu_2404: "projects/ubuntu-os-cloud/global/images/ubuntu-2404-noble-amd64-v20251121"
     zone: "europe-north2-a" # Choosing this region, since n4 cpu limit is 72 instead of 24
     machines:
-      # - "Redis1" # 1
-      # - "Redis2" # 1
-      # - "Redis3" # 1
-      # - "Redis4" # 1
-      # - "Redis5" # 1
+      # Choose the tested SUT here by commenting / uncommenting
+      # 8 Machines max
+      - "Redis1" # 1
+      - "Redis2" # 1
+      - "Redis3" # 1
+      - "Redis4" # 1
+      - "Redis5" # 1
       # - "Valkey1" # 2
       # - "Valkey2" # 2
       # - "Valkey3" # 2
@@ -29,11 +30,11 @@
       # - "KeyDB3" # 3
       # - "KeyDB4" # 3
       # - "KeyDB5" # 3
-      - "Acdis1" # 4
-      - "Acdis2" # 4
-      - "Acdis3" # 4
-      - "Acdis4" # 4
-      - "Acdis5" # 4
+      # - "Acdis1" # 4
+      # - "Acdis2" # 4
+      # - "Acdis3" # 4
+      # - "Acdis4" # 4
+      # - "Acdis5" # 4
       - "Bench1"
       - "Bench2"
       - "Bench3"
@@ -88,7 +89,6 @@
         # Applies this rule only to instances with this tag
         target_tags:
           - redis-server
-        # Allows traffic from anywhere (adjust 0.0.0.0/0 if you need to restrict source IPs)
         source_ranges:
           - "0.0.0.0/0"
         state: present
@@ -98,12 +98,12 @@
         msg: "Instance '{{ item.name }}' created with IP {{ item.networkInterfaces[0].accessConfigs[0].natIP | default('???') }}"
       loop: "{{ instance_data.results }}"
       loop_control: { label: "{{ item.name | default('SKIPPED') }}" }
-      when: not item.failed # Only print for successful items
+      when: not item.failed
 
     - name: Report failures
       debug:
         msg: "FAILED to create instance '{{ item.item }}'. Error: {{ item.msg | default(item.body.error.message) }}"
       loop: "{{ instance_data.results }}"
-      when: item.failed # Only print for failed items
+      when: item.failed
       loop_control:
         label: "{{ item.item | default('FAILED ITEM') }}"

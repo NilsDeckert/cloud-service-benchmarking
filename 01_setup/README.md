@@ -28,14 +28,19 @@ To use these playbooks:
 1. Create a service account
 2. Create and download a credentials file.
 3. Use `ansible-vault encrypt_string --name service_account_contents` and paste the contents of the keyfile.
-4. Take the encrypted output and paste it into `inventory_gcp_compute.yml`
-5. Take the `.json` keyfile and modify it's syntax to `.yml`
-6. Paste the `.yml` into an encrypted `group_vars/all/secrets.yml`
+4. To enable automation, write you vault password to a file named `pwd`
+5. Take the encrypted output and paste it into `inventory_gcp_compute.yml`
+6. Take the `.json` keyfile and modify it's syntax to `.yml`
+7. Paste the `.yml` into an encrypted `group_vars/all/secrets.yml`
 
 Additionally, you have to enable the `Compute Engine API` for the respective project.
 Make sure your SSH key is added to your gcp project.
 
+
 ## Preparation
+
+> [!NOTE]
+> You might want to do a search and replace to replace `nils` with your username.
 
 This project is set up to benchmark four key-value servers in clusters of different sizes.
 To configure the program and cluster size to test, edit the `01_create_instances.yml` playbook.

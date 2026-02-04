@@ -25,8 +25,9 @@
 - name: Clone acdis github repository
   ansible.builtin.git:
     repo: "https://github.com/NilsDeckert/acdis.git"
+    version: "tikv-jemallocator"
+    # version: main # Feel free to change the branch here
     dest: "{{ ansible_user_dir }}/acdis"
-    version: main
     force: true
 
 - name: Set `acdis_bin` based on hostname
@@ -65,9 +66,11 @@
     owner: root
     group: root
 
-- name: Enable & start acdis service
-  ansible.builtin.systemd_service:
-    state: restarted
-    daemon_reload: true
-    name: acdis
-  become: true
+# Make sure the cluster nodes don't join at the same time.
+# Might run into race-conditions otherwise
+- name: Rollout
+  ansible.builtin.include_tasks: restart.yml
+  loop: "{{ ansible_play_hosts }}"
+  loop_control:
+    loop_var: active_node
+  when: inventory_hostname == active_node

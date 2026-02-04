@@ -1,3 +1,8 @@
+#####################
+# Initiate benchmark
+#
+# You might need to adapt the path in the 'Find csv' task to fit your username
+#####################
 - name: Run benchmark
   become: yes
   gather_facts: yes
@@ -6,11 +11,7 @@
     - bench2
     - bench3
   tasks:
-    # - name: Run benchmark
-    #   ansible.builtin.shell: 
-    #     # cmd: "sudo /opt/benchmarker/benchmark -a {{ target_ip }} -c etc -r 20000000 -t 32 -o {{ output_file }}"
-    #     cmd: "sudo /opt/benchmarker/benchmark -a {{ target_ip }} -c etc -r 20000000 -t 32 --cluster -o {{output_file}}"
-
+    # Uncomment the --port 7000 line for acdis
     - name: Run benchmark
       ansible.builtin.shell: 
         cmd: >
@@ -18,7 +19,7 @@
           -a {{ target_ip }} 
           {{ '--port 7000' if ',' in target_ip else '' }} 
           -c etc 
-          -r 20000000 
+          -r 50000 
           -t 32 
           {{ '--cluster' if ',' in target_ip else '' }} 
           -o {{ output_file }}

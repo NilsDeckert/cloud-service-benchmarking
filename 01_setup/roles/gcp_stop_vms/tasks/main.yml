@@ -4,7 +4,7 @@
     project: "{{ gcp_project }}"
     zone: "{{ gcp_zone }}"
     filters:
-      - "status = RUNNING" # This efficiently filters for running VMs only
+      - "status = RUNNING"
     auth_kind: "serviceaccount"
     service_account_contents: "{{ gcp_service_account }}"
   register: running_instances_info
@@ -12,7 +12,7 @@
 - name: Stop running instances
   google.cloud.gcp_compute_instance:
     name: "{{ item.name }}"
-    state: absent # Can also be absent to delete instance
+    state: absent
     status: TERMINATED
     project: "{{ gcp_project }}"
     zone: "{{ gcp_zone }}"
@@ -20,7 +20,7 @@
     service_account_contents: "{{ gcp_service_account }}"
   loop: "{{ running_instances_info.resources }}"
   loop_control:
-    label: "{{ item.name }}" # For clean log output
+    label: "{{ item.name }}"
   when: running_instances_info.resources | length > 0
   async: 60
   poll: 0

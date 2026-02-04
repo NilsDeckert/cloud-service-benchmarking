@@ -1,3 +1,8 @@
+##################
+# Install the SUT and benchmarking software on the VMs
+#
+# If you want to benchmark single-node setups, uncomment the "Configure Cluster" steps
+##################
 - name: Install GCP agent
   become: yes
   hosts: all
