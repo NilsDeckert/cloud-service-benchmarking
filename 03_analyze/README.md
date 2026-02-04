@@ -20,3 +20,5 @@ To facilitate this, we expect the following data structure:
 │
 ├─ four-nodes/
 ```
+
+To plot memory usage we also load csv file exported from the gcp console from `./gcp_memory/*.csv`

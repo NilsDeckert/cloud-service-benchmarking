@@ -17,10 +17,12 @@ if not os.path.exists(output):
 
 dfs = []
 
-def get_weighted_stats(group_df, val_col="latency", weight_col="count"):
+def get_weighted_stats(group_df, val_col="latency", weight_col="count") -> dict:
     """
     Calculates weighted boxplot statistics (min, q1, median, q3, max)
     Assumes group_df is already sorted by val_col if not done previously.
+
+    @returns Dictionary of percentiles
     """
     d = group_df.sort_values(val_col)
     data = d[val_col]
@@ -43,8 +45,6 @@ def get_weighted_stats(group_df, val_col="latency", weight_col="count"):
         "whishi": data.max()   # 100th percentile
     }
 
-percentiles = {}
-
 # Collect csv from given folders
 for folder in folders:
     service = folder.rstrip("/").split("/")[-1]
@@ -52,31 +52,29 @@ for folder in folders:
     print(f"Service: {service}")
     files = glob.glob(f"{folder}/*.csv")
 
+    # List of dataframes for this service
     service_list = []
 
     for file in files:
         df = pd.read_csv(file, comment="#")
         df["service"] = service
         df["node"] = os.path.basename(file).rstrip(".csv")
-        # "Explode" csv. Repeat each latency 'count' times.
-        # df = df.loc[df.index.repeat(df['count'])]
-        # print(f"{file} has {len(df)} entries")
 
         service_list.append(df)
 
-    full_df = pd.concat(service_list, ignore_index=True)
+    service_df = pd.concat(service_list, ignore_index=True)
     
     ### Analysis per project
     stats_list = []
     
     # Group by command to calculate stats for each box
     # If you have multiple services/nodes, you might group by ["cmd", "service"] etc.
-    groups = full_df.groupby("cmd")
-    for name, group in groups:
+    commands = service_df.groupby("cmd")
+    for name, cmd in commands:
             # Calculate stats without exploding
-            stats = get_weighted_stats(group, val_col="latency", weight_col="count")
-            stats["label"] = name # The X-axis label
-            stats_list.append(stats)
+            percentiles = get_weighted_stats(cmd, val_col="latency", weight_col="count")
+            percentiles["label"] = name # The X-axis label
+            stats_list.append(percentiles)
 
     # Plotting using bxp (Boxplot from pre-calculated stats)
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -91,8 +89,8 @@ for folder in folders:
     plt.savefig(f"images/{service}_latency_by_command.png")
     plt.close()
 
-    # df = pd.concat(service_list, ignore_index=True)
-    # dfs.append(df)
+    df = pd.concat(service_list, ignore_index=True)
+    dfs.append(df)
     #
     # data = {
     #         "whislo": df["latency"].min()
@@ -108,19 +106,20 @@ for folder in folders:
 
 # Combine all dataframe into one
 df = pd.concat(dfs, ignore_index=True)
-print(df.head())
-
-print("=== BY SERVICE ===")
-plt.figure(figsize=(10, 6))
-summary = sns.boxplot(x="service", y="latency", data=df, showfliers=False)
-summary.set_title("Combined latency per service")
-plt.savefig(f"{output}/summary_latency.png")
-plt.close()
-
+# print(df.head())
+#
+# print("=== BY SERVICE ===")
+# plt.figure(figsize=(10, 6))
+# summary = sns.boxplot(x="service", y="latency", data=df, showfliers=False)
+# summary.set_title("Combined latency per service")
+# plt.savefig(f"{output}/summary_latency.png")
+# plt.close()
+#
 print("=== BY BENCHER ===")
 print(df.groupby(["node"]).describe())
 plt.figure(figsize=(10, 6))
 validation = sns.boxplot(x="node", y="latency", data=df, showfliers=False)
+plt.show()
 plt.savefig(f"{output}/validation_bencher.png")
 plt.close()
 
