@@ -339,14 +339,23 @@
 
 #section-slide(title: "What about acdis?")
 
-#slide(title: "Memory allocation and fragmentation")[
+#slide(title: "Memory Utilization - glibc")[
   #align(center)[
-    #image("./images/GCP_Memory.png")
+    #image("./images/GCP_Memory_glibc.png")
   ]
 ]
 
-#slide()
+#slide(title: "Memory Utilization - tikv-jemalloc")[
+  #align(center)[
+    #image("./images/GCP_Memory_tikv-jemalloc.png")
+  ]
+]
 
+#slide(title: "Memory Utilization - tikv-jemalloc + shrink_to_fit")[
+  #align(center)[
+    #image("./images/GCP_Memory_tikv-jemalloc + shrink_to_fit.png")
+  ]
+]
 
 // #slide(title: [First Slide])[
 //   #quote-block[
