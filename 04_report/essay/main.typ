@@ -49,9 +49,9 @@ KeyDB is another fork that claims to be a faster drop-in replacement to Redis. K
 
 = Benchmark Design
 
-In order to produce meaningful results, our benchmark aims to recreate realistic usage behavior.
-For this, @Sec_Hardware will explain the execution environment chosen for our benchmarks.
-Afterwards, @Sec_SystemSetup will describe the setups of the systems under test that were benchmarked.
+With our benchmarks we want to give meaningful comparisons of the tested system's latency for the operation in real-world conditions.
+For this, @Sec_Hardware will detail the execution environment under which the benchmarks were conducted.
+Afterwards, @Sec_SystemSetup will explain the tested systems and cluster setups. As well as their respective configurations.
 Finally, @Sec_LoadGeneration will deep-dive into the data generation chosen to provide realistic usage data.
 
 == Hardware<Sec_Hardware>
