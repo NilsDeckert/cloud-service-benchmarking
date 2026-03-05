@@ -72,39 +72,59 @@ Both the key-value stores and the benchmarking software were deployed to `n4-sta
 )[
 #table(
     columns: (auto, auto),
-  )[*Metric*][*Value*][
+  )[*Spec*][*Value*][
     vCPUs][4][
     Memory][8 GB][
-    Default egress bandwith][Up to 19 Gbps]
+    Default egress bandwith][Up to 10 Gbps]
 ]
 
-The virtual machines were deployed to the `europe-north2-a` region (Stockholm) due to higher CPU usage quotas. Both the SUTs and the load generators were deployed to the same region.
+The virtual machines were deployed to the `europe-north2-a` region (Stockholm) due to higher CPU usage quotas compared to other european regions. Both the SUTs and the load generators were deployed to the same region.
 
 == System Setup<Sec_SystemSetup>
 
-In order to provide an accurate assessment for the latency of the tested systems, we examine the systems under various constellations:
+In order to provide an accurate assessment for the latency of the tested systems, we examine the systems under various constellations: \ \
 
 - Single Node
 - Cluster of three nodes
 - Cluster of four nodes
 - Cluster of five nodes
+\ 
 
 The minimum cluster size for Redis and its derivatives is three, hence we were not able to conduct benchmarks with two nodes.
-For the benchmarks, the upper bound of the tested cluster sizes was dictated by the enforced CPU quotas of the Google Compute Engine.
-To assess how additional nodes help the cluster to cope with demand, we kept the same number of load generators while varying the size of the SUT cluster.
+The upper bound of the tested cluster sizes was dictated by the enforced CPU quotas of the Google Compute Engine.
+To assess how additional nodes help the cluster to cope with demand, we kept the same number of load generators while varying the size of the SUT cluster. \ \
 
-The virtual machines hosting the Redis, Valkey and Acids applications, as well as the load generators were running Ubuntu 24.04. Since there was no KeyDB release available for that Ubuntu version, we used Ubuntu 22.04 for this SUT.
+The virtual machines hosting the Redis, Valkey and Acdis applications, as well as the load generators were running Ubuntu 24.04. Since there was no KeyDB release available for that Ubuntu version, we used Ubuntu 22.04 for this SUT.
 
 In order to reduce the number of variable factors in the benchmarks and to create fair conditions for all SUTs, we disabled replication, snapshots and persistence for Redis, Valkey and KeyDB. Acdis does not support any of these features, so we kept the default configuration.
 
-Additionally, we followed the vendors recommendations for configuartion and set the number of usable CPU cores for the Redis forks to 3 (number of CPU cores - 1).
+Additionally, we followed the vendors recommendations for configuration and set the number of usable CPU cores for the Redis forks to 3 (number of CPU cores - 1).
 
 == Load Generation<Sec_LoadGeneration>
 
-In order to generate meaningful results, we need to subject the application to a realistic usage scenario
-#cite(<atikogluWorkloadAnalysisLargeScale2012>, form: "author") collected traces on the memcached cluster used at Facebook in #cite(<atikogluWorkloadAnalysisLargeScale2012>, form: "year"). Based on these traces, they provided a model to recreate realistic usage behavior for key-value stores.
+In order to generate meaningful results, we need to subject the application to a realistic usage scenario.
+#cite(<atikogluWorkloadAnalysisLargeScale2012>, form: "author") collected traces on the memcached cluster used at Facebook in #cite(<atikogluWorkloadAnalysisLargeScale2012>, form: "year"). The collected traces include 284 billion requests over the span of 'several days'.
+A similar study was conducted by researchers at Twitter in #cite(<yangLargescaleAnalysisHundreds2021>, form: "year") @yangLargescaleAnalysisHundreds2021. In this case, the researches analyzed the data of about 700 billion requests 153 Twemcache instances.
 
-The model suggests a 70% / 25% / 5% ratio #footnote[Approximate values, the paper only shows a barchart without providing concrete numbers.] of the received GET / DEL / SET requests. Additionally, it provides distributions for key and value lengths.
+In their study, Atikoglu et al. analyzed the workloads from five memcached pools serving different purposes @atikogluWorkloadAnalysisLargeScale2012, namely:
+
+ - User-account status info
+ - Object metadata
+ - Browser information
+ - System data on service location
+ - General-Purpose
+
+Based on the traces collected for the general-purpose pool, the researches provided a model to recreate realistic usage behavior for key-value stores. We will base the design of our load generator on this model.
+
+The described model suggests a 70% / 25% / 5% ratio 
+#footnote[Approximate values, the paper only shows a barchart without providing concrete numbers.]
+of the received GET / DEL / SET requests.
+In the study of Twemcache deployments at Twitter, the ratios differ from those examined at Facebook @atikogluWorkloadAnalysisLargeScale2012. While GET and SET operations are still the most commenly used, #cite(<yangLargescaleAnalysisHundreds2021>, form: "author") observed a noticeably higher percentage of GET requests of around \~90%.
+  Still, around a third of the clusters are considered 'write-heavy' ($gt.eq 35%$ write operations).
+\ \
+
+In addition to the ratio of received commands, @atikogluWorkloadAnalysisLargeScale2012 provides distributions for key and value lengths.
+For key sizes, similar properties where observed in @atikogluWorkloadAnalysisLargeScale2012 and @yangLargescaleAnalysisHundreds2021
 
 We will execute the workload described in @atikogluWorkloadAnalysisLargeScale2012 on all setups described in @Sec_SystemSetup.
 
