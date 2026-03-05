@@ -28,7 +28,9 @@
 = Introduction
 
 Key-Value stores are a common part of modern online systems.
-The most prominent example is Redis #footnote[https://redis.io]. Caused by the change of license used by Redis in 20XX, multiple open source alternatives emerged. Valkey #footnote[https://valkey.io] and KeyDB #footnote[https://docs.keydb.dev] are forks of the original Redis project. Acdis #footnote[https://github.com/NilsDeckert/acdis] is a case study of the actor model, implementing a redis-compatible application.
+Especially for low-latency systems, in-memory databases allow for faster data accesses than traditional, disk-based applications @rosenscholdNextGenerationCloudnative2025.
+The most prominent example is Redis #footnote[https://redis.io] @akhtarPopularityRankingDatabase2023a @DBEnginesRankingPopularity2026, which is often used for caching @yangLargescaleAnalysisHundreds2021 @HowStackOverflow2019.
+Caused by a change of license in #cite(<redisRedisAdoptsDual>, form: "year"), multiple open source alternatives emerged. Valkey #footnote[https://valkey.io] and KeyDB #footnote[https://docs.keydb.dev] are forks of the original Redis project which claim to be faster drop-in alternatives. Acdis #footnote[https://github.com/NilsDeckert/acdis] is a case study of the actor model, implementing a minimal redis-compatible application.
 
 #linebreak()
 
@@ -39,8 +41,8 @@ This paper aims to provide a comparison between the four open-source key-value s
 == Background
 
 In 2014, Redis was the most-popular key-value store.
-In XXXX, the license Redis was changed to closed source. This prompted multiple initiatives to fork the key-value store and continue on their own under open-source licenses.
-The most-popular of these forks is Valkey, which is now backed by the Linux foundation, which in turn is backed by X, Y and Z amongst others.
+In #cite(<redisRedisAdoptsDual>, form: "year"), the license was changed to closed source. This prompted multiple initiatives to fork the key-value store and continue on their own under open-source licenses.
+The most-popular of these forks is Valkey, which is now backed by the Linux foundation, which in turn is backed by Google, Meta and Microsoft amongst others.
 KeyDB is another fork that claims to be a faster drop-in replacement to Redis. KeyDB is own by Snap Inc., the company behind Snapchat.
 
 == Benchmark Objectives
@@ -51,21 +53,32 @@ KeyDB is another fork that claims to be a faster drop-in replacement to Redis. K
 
 With our benchmarks we want to give meaningful comparisons of the tested system's latency for the operation in real-world conditions.
 For this, @Sec_Hardware will detail the execution environment under which the benchmarks were conducted.
-Afterwards, @Sec_SystemSetup will explain the tested systems and cluster setups. As well as their respective configurations.
+Afterwards, @Sec_SystemSetup will explain the tested systems and cluster setups, as well as their respective configurations.
 Finally, @Sec_LoadGeneration will deep-dive into the data generation chosen to provide realistic usage data.
 
 == Hardware<Sec_Hardware>
 
-In order to provide a realistic execution environment for our benchmark, it is important to deploy the systems under tests to production ready machines on the internet.
-Testing these systems locally and running all cluster nodes on the same machine would neglect how these cache systems are used in the real world.
+In order to provide a realistic execution environment for our benchmark, it is important to deploy the systems under test to production ready machines on the internet.
+Testing these systems locally and running all cluster nodes on the same machine would neglect how these systems are used in the real world.
 The latency and error-proneness of network connections are an important factor in the real life operation of IT systems.
 
-*Find some sources here on the popularity of cloud providers like aws or gce*
+In the European Union, around 45% of enterprises utilize cloud computing services in their businesses @CloudComputingStatistics. Another 45% of them are using these services to host database systems @CloudComputingStatistics.
 
-To recreate conditions that come close to that of real-world operations, we decided the deploy both the systems under tests and the load generators to virtual machines on the google compute engine.
-The key-value stores and the benchmarking software are deployed to Google Cloud Compute Engine virtual machines.
-The key-value stores are running on `n4-standard-highcpu` machines. The benchmarking software is deployed to `n4-standard-n` instances.
-The virtual machines were deployed to the *XXXX* region (Stockholm) due to higher cpu usage quotas. Both the SUTs and the load generators were deployed to the same region.
+To recreate conditions that come close to that of real-world operations, we decided the deploy both the systems under tests and the load generators to virtual machines on the Google Compute Engine.
+Both the key-value stores and the benchmarking software were deployed to `n4-standard-highcpu` virtual machines.
+
+#figure(
+  caption: "Specs of the n4-standard-highcpu Virtual Machine"
+)[
+#table(
+    columns: (auto, auto),
+  )[*Metric*][*Value*][
+    vCPUs][4][
+    Memory][8 GB][
+    Default egress bandwith][Up to 19 Gbps]
+]
+
+The virtual machines were deployed to the `europe-north2-a` region (Stockholm) due to higher CPU usage quotas. Both the SUTs and the load generators were deployed to the same region.
 
 == System Setup<Sec_SystemSetup>
 
@@ -76,17 +89,36 @@ In order to provide an accurate assessment for the latency of the tested systems
 - Cluster of four nodes
 - Cluster of five nodes
 
-The minimum cluster size for Redis and its derivatives is three.
-For the benchmarks, the upper bound of the tested cluster sizes was dictated by the enforced cpu quotas of the Google Compute Engine.
+The minimum cluster size for Redis and its derivatives is three, hence we were not able to conduct benchmarks with two nodes.
+For the benchmarks, the upper bound of the tested cluster sizes was dictated by the enforced CPU quotas of the Google Compute Engine.
 To assess how additional nodes help the cluster to cope with demand, we kept the same number of load generators while varying the size of the SUT cluster.
+
+The virtual machines hosting the Redis, Valkey and Acids applications, as well as the load generators were running Ubuntu 24.04. Since there was no KeyDB release available for that Ubuntu version, we used Ubuntu 22.04 for this SUT.
+
+In order to reduce the number of variable factors in the benchmarks and to create fair conditions for all SUTs, we disabled replication, snapshots and persistence for Redis, Valkey and KeyDB. Acdis does not support any of these features, so we kept the default configuration.
+
+Additionally, we followed the vendors recommendations for configuartion and set the number of usable CPU cores for the Redis forks to 3 (number of CPU cores - 1).
 
 == Load Generation<Sec_LoadGeneration>
 
-In order to generate meaningful results, we need to subject the application to a realistic usage scenario. #cite(<atikogluWorkloadAnalysisLargeScale2012>, form: "author") collected traces on the memcached cluster used at Facebook in #cite(<atikogluWorkloadAnalysisLargeScale2012>, form: "year"). Based on these traces, they provided a model to recreate realistic usage behavior for key-value stores.
+In order to generate meaningful results, we need to subject the application to a realistic usage scenario
+#cite(<atikogluWorkloadAnalysisLargeScale2012>, form: "author") collected traces on the memcached cluster used at Facebook in #cite(<atikogluWorkloadAnalysisLargeScale2012>, form: "year"). Based on these traces, they provided a model to recreate realistic usage behavior for key-value stores.
 
 The model suggests a 70% / 25% / 5% ratio #footnote[Approximate values, the paper only shows a barchart without providing concrete numbers.] of the received GET / DEL / SET requests. Additionally, it provides distributions for key and value lengths.
 
 We will execute the workload described in @atikogluWorkloadAnalysisLargeScale2012 on all setups described in @Sec_SystemSetup.
+
+#figure(
+  caption: [The distribution of key sizes used for the benchmark as described in @atikogluWorkloadAnalysisLargeScale2012]
+)[
+  #image("./graph_code/etc_key_size.png")
+]
+
+#figure(
+  caption: [The distribution of value sizes used for the benchmark as described in @atikogluWorkloadAnalysisLargeScale2012]
+)[
+  #image("./graph_code/etc_value_size.png")
+]
 
 // Results
 = Results
