@@ -124,21 +124,23 @@ In the study of Twemcache deployments at Twitter, the ratios differ from those e
 \ \
 
 In addition to the ratio of received commands, @atikogluWorkloadAnalysisLargeScale2012 provides distributions for key and value lengths.
-For key sizes, similar properties where observed in @atikogluWorkloadAnalysisLargeScale2012 and @yangLargescaleAnalysisHundreds2021
-
-We will execute the workload described in @atikogluWorkloadAnalysisLargeScale2012 on all setups described in @Sec_SystemSetup.
+Both @atikogluWorkloadAnalysisLargeScale2012 and @yangLargescaleAnalysisHundreds2021 observe, that the majority of both key and value sizes are relatively small. The model described in @atikogluWorkloadAnalysisLargeScale2012 uses a Generalized Extrem Value distribution with parameters $mu = 30.7984, alpha = 8.20449, k = 0.078688$ for key sizes. A visualization of the distribution is shown in @fig_key_size_distribution.
+For value sizes, a Generalized Pareto distribution with parameters $θ = 0, σ = 214.476, k = 0.348238$ is chosen.
+Both distributions provide a realistiv representation of object sizes, independet of temporal patterns.
 
 #figure(
   caption: [The distribution of key sizes used for the benchmark as described in @atikogluWorkloadAnalysisLargeScale2012]
 )[
   #image("./graph_code/etc_key_size.png")
-]
+]<fig_key_size_distribution>
 
 #figure(
   caption: [The distribution of value sizes used for the benchmark as described in @atikogluWorkloadAnalysisLargeScale2012]
 )[
   #image("./graph_code/etc_value_size.png")
-]
+]<fig_val_size_distribution>
+
+We will execute the workload described in @atikogluWorkloadAnalysisLargeScale2012 on all setups described in @Sec_SystemSetup.
 
 // Results
 = Results
