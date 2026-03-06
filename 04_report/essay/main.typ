@@ -92,6 +92,8 @@ In order to provide an accurate assessment for the latency of the tested systems
 
 The minimum cluster size for Redis and its derivatives is three, hence we were not able to conduct benchmarks with two nodes.
 The upper bound of the tested cluster sizes was dictated by the enforced CPU quotas of the Google Compute Engine.
+
+The requests sent to the systems under test are coming from three separate Google Compute Engine virtual machines. The generation of the benchmarking data is detailed in @Sec_LoadGeneration.
 To assess how additional nodes help the cluster to cope with demand, we kept the same number of load generators while varying the size of the SUT cluster. \ \
 
 The virtual machines hosting the Redis, Valkey and Acdis applications, as well as the load generators were running Ubuntu 24.04. Since there was no KeyDB release available for that Ubuntu version, we used Ubuntu 22.04 for this SUT.
@@ -114,19 +116,17 @@ In their study, Atikoglu et al. analyzed the workloads from five memcached pools
  - System data on service location
  - General-Purpose
 
-Based on the traces collected for the general-purpose pool, the researches provided a model to recreate realistic usage behavior for key-value stores. We will base the design of our load generator on this model.
+Based on the traces collected for the general-purpose pool, the researches provide a model to recreate realistic usage behavior for key-value stores. We will base the design of our load generator on this model.
 
 The described model suggests a 70% / 25% / 5% ratio 
 #footnote[Approximate values, the paper only shows a barchart without providing concrete numbers.]
 of the received GET / DEL / SET requests.
-In the study of Twemcache deployments at Twitter, the ratios differ from those examined at Facebook @atikogluWorkloadAnalysisLargeScale2012. While GET and SET operations are still the most commenly used, #cite(<yangLargescaleAnalysisHundreds2021>, form: "author") observed a noticeably higher percentage of GET requests of around \~90%.
+In the study of Twemcache deployments at Twitter, the ratios differ from those examined at Facebook @atikogluWorkloadAnalysisLargeScale2012. While GET and SET operations are still the most commenly used, #cite(<yangLargescaleAnalysisHundreds2021>, form: "author") observed a noticeably higher average percentage of GET requests of around \~90%.
   Still, around a third of the clusters are considered 'write-heavy' ($gt.eq 35%$ write operations).
 \ \
 
 In addition to the ratio of received commands, @atikogluWorkloadAnalysisLargeScale2012 provides distributions for key and value lengths.
 Both @atikogluWorkloadAnalysisLargeScale2012 and @yangLargescaleAnalysisHundreds2021 observe, that the majority of both key and value sizes are relatively small. The model described in @atikogluWorkloadAnalysisLargeScale2012 uses a Generalized Extrem Value distribution with parameters $mu = 30.7984, alpha = 8.20449, k = 0.078688$ for key sizes. A visualization of the distribution is shown in @fig_key_size_distribution.
-For value sizes, a Generalized Pareto distribution with parameters $θ = 0, σ = 214.476, k = 0.348238$ is chosen.
-Both distributions provide a realistiv representation of object sizes, independet of temporal patterns.
 
 #figure(
   caption: [The distribution of key sizes used for the benchmark as described in @atikogluWorkloadAnalysisLargeScale2012]
@@ -134,16 +134,78 @@ Both distributions provide a realistiv representation of object sizes, independe
   #image("./graph_code/etc_key_size.png")
 ]<fig_key_size_distribution>
 
+For value sizes of 15 bytes and larger, a Generalized Pareto distribution with parameters $θ = 0, σ = 214.476, k = 0.348238$ is chosen.
+The first 15 values and their respective probabilties are given in @table_val_size_probs. The combined distribution is visualized in @fig_val_size_distribution.
+Both distributions provide a realistic representation of object sizes, independet of temporal patterns.
+
 #figure(
   caption: [The distribution of value sizes used for the benchmark as described in @atikogluWorkloadAnalysisLargeScale2012]
 )[
   #image("./graph_code/etc_value_size.png")
 ]<fig_val_size_distribution>
 
-We will execute the workload described in @atikogluWorkloadAnalysisLargeScale2012 on all setups described in @Sec_SystemSetup.
+#figure(
+  caption: [Probabilities for the first 15 value sizes, as given in @atikogluWorkloadAnalysisLargeScale2012]
+)[
+#grid(
+  columns: (1fr, 1fr),
+  gutter: 20pt,
+  table(
+    columns: (auto, auto),
+    inset: 8pt,
+    [*Value size*], [*Probability*],
+    [0], [0.00536],
+    [1], [0.00047],
+    [2], [0.17820],
+    [3], [0.09239],
+    [4], [0.00018],
+    [5], [0.02740],
+    [6], [0.00065],
+    [7], [0.00606],
+  ),
+  
+  // Second half of the table
+  table(
+    columns: (auto, auto),
+    inset: 8pt,
+    [*Value size*], [*Probability*],
+    [8], [0.00023],
+    [9], [0.00837],
+    [10], [0.00837],
+    [11], [0.08989],
+    [12], [0.00092],
+    [13], [0.00326],
+    [14], [0.01980],
+  )
+)
+]<table_val_size_probs>
+
+In addition to SET/GET/DEL ratios and request sizes, the two studies @atikogluWorkloadAnalysisLargeScale2012 @yangLargescaleAnalysisHundreds2021 provide data on the timings between consecutive incoming requests and the 'popularity' of single keys.
+For simplicity, these factors are not considered in our distributed load-balancing setup. \ \
+
+As described in @Sec_SystemSetup, the benchmarking requests will be sent from three nodes, each running the load generator described here.
+Before the benchmark, the load generators will run a warm-up sequence, sending a total of 6 million `SET` requests to the system under test.
+For the actual benchmark, the cluster is exposed to a total of 60 million requests with the ratio described above.
+Each load generation node is connecting to the SUT with 32 clients.
 
 // Results
-= Results
+= Results <Sec_Results>
+
+After describing the benchmarking setup in @Sec_SystemSetup and the load generation in @Sec_LoadGeneration, this Section will present the collected data for Redis, Valkey and KeyDB.
+For Acdis, the load generation led to excessive memory usage which ultimately killed the application.
+The results presented here and the behaviour of Acdis will be discussed in @Sec_Discussion. \ \
+
+For the three tested Redis forks, the latencies of the commands behaved similarly throughout the benchmarked cluster sizes.
+For all SUTs, the `SET` command had the highest median latency of all tested commands.
+Except for the Valkey and KeyDB one node deployments, the `GET` command consistenly was the fasted of the three request types.
+For these two exceptions, both `DEL` and `GET` exhibited the same latency. @fig_relative_cmd_latency shows the relative latency of the `GET` and `DEL` commands compared to the latency of the `SET` command.
+
+#figure(
+  image("./images/cmd_latency_variance.png", width: 100%),
+  caption: [Relative latency of `DEL` and `GET` commands relative to `SET`],
+  placement: auto,
+  scope: "parent",
+) <fig_relative_cmd_latency>
 
 #figure(
   caption: "Summary of the median latencies of the SUTs"
@@ -165,8 +227,10 @@ We will execute the workload described in @atikogluWorkloadAnalysisLargeScale201
   #image("./images/5-nodes/redis_latency_by_command.png")
 ]
 
+== Valkey
+
 // Discussion
-= Discussion
+= Discussion <Sec_Discussion>
 
 = Conclusion
 
