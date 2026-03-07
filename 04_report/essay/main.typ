@@ -3,7 +3,11 @@
 #show: ieee.with(
   title: [Latency comparison of key-value stores for different cluster sizes],
   abstract: [
-    We've benchmarked the open source key-value stores Redis, Valkey, KeyDB and Acdis for different cluster sizes. We found that XXX features the lowest latency for single-node setups, while YYY is faster for clusters of up to 7 nodes. For clusters of 8 nodes and up, ZZZ is the fastest alternative.
+    In-memory key-value stores are a common building block in modern server systems, often leveraged as a cache to reduce latency for clients.
+    In this study we benchmark the four open-source in-memory key-value-stores Redis, Valkey, KeyDB, and Acdis and compare their latency for clusters of different sizes.
+    We find that Redis features the lowest latency for single-node setups, but has the highest latency of the compared alternatives for all multi-node setups.
+    For clusters, the tested applications have comparable latencies, with KeyDB exhibiting the lowest latency for three and four nodes and Valkey having the lowest latency for the tested five node setups.
+    For the tested workload of 60 Million Requests, only minor improvements in latency where observed for clusters larger than three nodes.
   ],
   authors: (
     (
@@ -265,6 +269,11 @@ It involves allocating memory for the value itself and the respective metadata a
 Since we did not consider the popularity of single keys and did not differentiate between cache hits and cache misses, the load generator sent requests for keys without considering if the cluster had seen them or not.
 This most likely resulted in numerous `GET` requests for keys that the cluster hadn't seen before.
 In addition to the already great performance of the `GET` operation, the system can avoid sending data over the network in these cases, reducing the measured latency even more.
+
+Since the `SET` and `DEL` operations return output independet of the value length, our ommission likely skewed the results for the `GET` command, which returns the entire value of the given key. \ \
+
+A noticeable difference between the single-node and multi-node benchmarks is the order of the fastest SUTs.
+While Redis had the lowest latency of all applications for a single node, it had the highest latency in all other multi-node runs.
 
 = Conclusion
 
