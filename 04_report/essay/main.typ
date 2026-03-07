@@ -197,8 +197,8 @@ The results presented here and the behaviour of Acdis will be discussed in @Sec_
 
 For the three tested Redis forks, the latencies of the commands behaved similarly throughout the benchmarked cluster sizes.
 For all SUTs, the `SET` command had the highest median latency of all tested commands.
-Except for the Valkey and KeyDB one node deployments, the `GET` command consistenly was the fasted of the three request types.
-For these two exceptions, both `DEL` and `GET` exhibited the same latency. @fig_relative_cmd_latency shows the relative latency of the `GET` and `DEL` commands compared to the latency of the `SET` command.
+Except for the Valkey and KeyDB single node deployments, the `GET` command consistenly was the fasted of the three request types.
+For these two exceptions, both `DEL` and `GET` exhibited the same latency. @fig_relative_cmd_latency shows the relative latency of the `GET` and `DEL` commands compared to the latency of the `SET` command. \ \
 
 #figure(
   image("./images/cmd_latency_variance.png", width: 100%),
@@ -207,27 +207,39 @@ For these two exceptions, both `DEL` and `GET` exhibited the same latency. @fig_
   scope: "parent",
 ) <fig_relative_cmd_latency>
 
+Regarding the median latencies of the tested applications for varying cluster sizes, we observe that the measured latency decreases with increasing cluster size for all SUTs.
+While the trend was the same for all of the three applications, the rate with which the latency decreased varies accross SUTs.
+@fig_summary_median_latencies shows the measured command latencies for Redis, Valkey and KeyDB.
+
 #figure(
   caption: "Summary of the median latencies of the SUTs"
 )[
   #image("./images/barchart_latency.png")
-]
+] <fig_summary_median_latencies>
 
-== Redis
-
-#figure(
-  caption: "Latency by command. Redis, one node"
-)[
-  #image("./images/1-nodes/redis_latency_by_command.png")
-]
+Looking at the frequency of recorded latencies, we observe a sudden increase in frequency at around $260 mu s$ for all applications and all cluster sizes. An example of the sudden spike in latency frequence in given in @fig_latency_freq_redis.
 
 #figure(
-  caption: "Latency by command. Redis, five nodes"
+  caption: "Frequencies of recorded latencies for a single node Redis deployment"
 )[
-  #image("./images/5-nodes/redis_latency_by_command.png")
-]
+  #image("./images/1-nodes/redis_latency_frequency.png")
+] <fig_latency_freq_redis>
 
-== Valkey
+== Acdis
+
+When running the benchmarks agains Acdis, we faced issues that 
+ the benchmarks did not run to completion, as the application was stopped by the OS during the run.
+
+After investigation we found that the memory usage of Acdis was considerably higher than that of the Redis derivatives.
+Before end of the benchmark, the application attempted to reserve more memory than was available for the Virtual Machine.
+As a result the operating system stopped the SUT early with an "out-of memory" exception.
+@fig_gcp_memory_glibc shows the memory consumption for a three node Acdis deployment as recorded by the Google Compute Engine.
+
+#figure(
+  caption: "Memory usage for a three node Acdis deployment. Note that the tails after the 'OOM-Killed' marker are artificially extended for better readability of the graph." 
+)[
+  #image("./images/GCP_Memory_glibc.png")
+] <fig_gcp_memory_glibc>
 
 // Discussion
 = Discussion <Sec_Discussion>
