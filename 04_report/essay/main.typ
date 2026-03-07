@@ -197,8 +197,10 @@ The results presented here and the behaviour of Acdis will be discussed in @Sec_
 
 For the three tested Redis forks, the latencies of the commands behaved similarly throughout the benchmarked cluster sizes.
 For all SUTs, the `SET` command had the highest median latency of all tested commands.
-Except for the Valkey and KeyDB single node deployments, the `GET` command consistenly was the fasted of the three request types.
-For these two exceptions, both `DEL` and `GET` exhibited the same latency. @fig_relative_cmd_latency shows the relative latency of the `GET` and `DEL` commands compared to the latency of the `SET` command. \ \
+Except for the Valkey and KeyDB single node deployments, the `GET` command consistenly was the fastest of the three request types.
+For these two exceptions, both `DEL` and `GET` exhibited the same latency. @fig_relative_cmd_latency shows the relative latency of the `GET` and `DEL` commands compared to the latency of the `SET` command.
+While both Valkey and KeyDB showed an increasing descrepancy in latency between the `SET` command and the `DEL` and `GET` commands for growing clusters, this behaviour could not be observed for Redis.
+In this case, the difference between `SET` and the other commands decreased in the five node cluster compared to the four node deployment.\ \
 
 #figure(
   image("./images/cmd_latency_variance.png", width: 100%),
@@ -217,7 +219,13 @@ While the trend was the same for all of the three applications, the rate with wh
   #image("./images/barchart_latency.png")
 ] <fig_summary_median_latencies>
 
-Looking at the frequency of recorded latencies, we observe a sudden increase in frequency at around $260 mu s$ for all applications and all cluster sizes. An example of the sudden spike in latency frequence in given in @fig_latency_freq_redis.
+For single node setups, the difference in median latency across the tested applications is very noticeable.
+Valkey has the highest median latency at $371 mu s$, KeyDB follows at $321 mu s$ and Redis has the lowest median latency for single-node setups at $299 mu s$.
+
+Once additional nodes are added to the cluster however, the benchmark results show a change in the overall standings.
+For three, four and five node clusters, Redis shows the highest recorded latency of the three alternatives. \ \
+
+Looking at the frequency of recorded latencies, we observe a sudden increase in frequency at around $260 mu s$ for all applications and all cluster sizes. An example of the sudden spike in latency frequence is given in @fig_latency_freq_redis.
 
 #figure(
   caption: "Frequencies of recorded latencies for a single node Redis deployment"
@@ -227,22 +235,36 @@ Looking at the frequency of recorded latencies, we observe a sudden increase in 
 
 == Acdis
 
-When running the benchmarks agains Acdis, we faced issues that 
+When running the benchmarks against Acdis, we faced issues that 
  the benchmarks did not run to completion, as the application was stopped by the OS during the run.
 
 After investigation we found that the memory usage of Acdis was considerably higher than that of the Redis derivatives.
-Before end of the benchmark, the application attempted to reserve more memory than was available for the Virtual Machine.
+Before the end of the benchmark, the application attempted to reserve more memory than was available for the Virtual Machine.
 As a result the operating system stopped the SUT early with an "out-of memory" exception.
 @fig_gcp_memory_glibc shows the memory consumption for a three node Acdis deployment as recorded by the Google Compute Engine.
 
 #figure(
-  caption: "Memory usage for a three node Acdis deployment. Note that the tails after the 'OOM-Killed' marker are artificially extended for better readability of the graph." 
+  caption: "Memory usage for a three node Acdis deployment. Note that the tails after the drop are artificially extended for better readability of the graph." 
 )[
   #image("./images/GCP_Memory_glibc.png")
 ] <fig_gcp_memory_glibc>
 
+To further investigate the memory usage of Acdis, we exchanged the default glibc memory allocator to tikv-jemalloc, which is also used by Redis (*CITATION NEEDED*).
+However, that did not change the behaviour significantly reaching the highest memory usage at $94.7%$ instead of $95.65$.
+As 25% of requests are `DEL` requests, we modified the Acdis source code to shrink the underlying HashMap to the minimum size for every received `DEL` request.
+Again, this did not change the memory usage significantly, leading to the process being killed at $90.8%$ usage.
+
 // Discussion
 = Discussion <Sec_Discussion>
+
+Throughout all applications and all cluster sizes, the `SET` command had the highest latency of the three tested commands.
+This is in line with expected behaviour of the equivalent HashMap operations.
+While the theoretical time complexity of the three operations is `O(1)`, adding keys is highly expensive in practice.
+It involves allocating memory for the value itself and the respective metadata and thus adds an expensive overhead.
+
+Since we did not consider the popularity of single keys and did not differentiate between cache hits and cache misses, the load generator sent requests for keys without considering if the cluster had seen them or not.
+This most likely resulted in numerous `GET` requests for keys that the cluster hadn't seen before.
+In addition to the already great performance of the `GET` operation, the system can avoid sending data over the network in these cases, reducing the measured latency even more.
 
 = Conclusion
 
