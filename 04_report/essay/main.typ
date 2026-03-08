@@ -7,7 +7,7 @@
     In this study we benchmark the four open-source in-memory key-value-stores Redis, Valkey, KeyDB, and Acdis and compare their latency for clusters of different sizes.
     We find that Redis features the lowest latency for single-node setups, but has the highest latency of the compared alternatives for all multi-node setups.
     For clusters, the tested applications have comparable latencies, with KeyDB exhibiting the lowest latency for three and four nodes and Valkey having the lowest latency for the tested five node setups.
-    For the tested workload of 60 Million Requests, only minor improvements in latency where observed for clusters larger than three nodes.
+    For the tested workload of 60 Million Requests, only minor improvements in latency were observed for clusters larger than three nodes.
   ],
   authors: (
     (
@@ -47,9 +47,14 @@ This paper aims to provide a comparison between the four open-source key-value s
 In 2014, Redis was the most-popular key-value store.
 In #cite(<redisRedisAdoptsDual>, form: "year"), the license was changed to closed source. This prompted multiple initiatives to fork the key-value store and continue on their own under open-source licenses.
 The most-popular of these forks is Valkey, which is now backed by the Linux foundation, which in turn is backed by Google, Meta and Microsoft amongst others.
-KeyDB is another fork that claims to be a faster drop-in replacement to Redis. KeyDB is own by Snap Inc., the company behind Snapchat.
+KeyDB is another fork that claims to be a faster drop-in replacement to Redis. KeyDB is owned by Snap Inc., the company behind Snapchat.
 
 == Benchmark Objectives
+
+Redis, Valkey and KeyDB share a large part of their codebase, which could suggest similar performance characteristics to users.
+At the same time, KeyDB claims to be "a faster drop in alternative to Redis" @KeyDBFasterRedisa.
+Acdis is an entirely different approach, implementing a key-value store based on the Actor Model to leverage parallel processing for faster operations.
+With this study, we want to (a) examine KeyDBs claim and (b) provide users with the necessary data to choose a software solution for their deployment use cases.
 
 // Methods
 
@@ -229,13 +234,19 @@ Valkey has the highest median latency at $371 mu s$, KeyDB follows at $321 mu s$
 Once additional nodes are added to the cluster however, the benchmark results show a change in the overall standings.
 For three, four and five node clusters, Redis shows the highest recorded latency of the three alternatives. \ \
 
-Looking at the frequency of recorded latencies, we observe a sudden increase in frequency at around $260 mu s$ for all applications and all cluster sizes. An example of the sudden spike in latency frequence is given in @fig_latency_freq_redis.
+Looking at the frequency of recorded latencies, we observe multiple peaks for Valkey and KeyDB single-node deployments. These peaks are not present for Redis or any multi-node deployments. @fig_latency_freq_redis and @fig_latency_freq_valkey show a comparison between the single-node deployments of Redis and Valkey.
 
 #figure(
   caption: "Frequencies of recorded latencies for a single node Redis deployment"
 )[
   #image("./images/1-nodes/redis_latency_frequency.png")
 ] <fig_latency_freq_redis>
+
+#figure(
+  caption: "Frequencies of recorded latencies for a single node Valkey deployment. Note the three distinct peaks."
+)[
+  #image("./images/1-nodes/valkey_latency_frequency.png")
+] <fig_latency_freq_valkey>
 
 == Acdis
 
@@ -274,7 +285,29 @@ Since the `SET` and `DEL` operations return output independet of the value lengt
 
 A noticeable difference between the single-node and multi-node benchmarks is the order of the fastest SUTs.
 While Redis had the lowest latency of all applications for a single node, it had the highest latency in all other multi-node runs.
+Thus, if users do not intend to scale their deployments horizontally, Redis likely is the most promising choice among the tested applications.
+
+In our benchmarks, KeyDB was the fastest SUT for clusters of three and four nodes. For one and five-node deployments however, their claim to be "a faster drop in alternative to Redis" @KeyDBFasterRedisa did not hold true.
+Based on the data we collected, KeyDB is the fastest choice for small clusters.
+For our five-node benchmark, Valkey had the lowest latency.
+As our study only benchmarked clusters of up to five nodes however, it is hard to make assumptions about the performance with larger clusters.
+
+As the performance for clusters is ultimately very similar across applications, users should also keep in mind licensing implications.
+While Redis changed their licensing model from the SSPL license to the AGPLv3 in 2025 @redisRedisNowAvailable, history has shown that licenses can be changed at the discretion of the maintaining company @redisRedisAdoptsDual.
+While Redis and KeyDB are maintained by their respective companies, Valkey is backed by the Linux Foundation #footnote[https://www.linuxfoundation.org/] which ensures the project will stay open-source @Valkeya.
 
 = Conclusion
 
+In this study, we performent benchmarks on the in-memory key-value stores Redis, Valkey, KeyDB and Acdis to assess their latency for increasing cluster sizes.
+We found that Redis had the lowest latency for single-node setups but had the highest latency once if was deployed as a cluster.
+For three and four node clusters, KeyDB was the fastest of the tested applications. Valkey had the lowest latency for five-node clusters.
+For Acdis, the memory usage was substantially higher than that of all other systems under test. This large memory footprint led to early termination of the benchmarks, preventing the collection of meaningful data.
+
 = Outlook
+
+An important limitation of the benchmarking methodology for this study was the omission of key hit-rates, especially for `GET` requests. In order to provide more meaningful results, it would make sense to repeat the benchmarks described here, with a mechanism to to enforce a given hit-rate.
+
+Similarly, future work could repeat the experiments while scaling the workload with the cluster size. In this study we maintain a fixed number of requests to assess the performance improvements of adding nodes to a cluster. Since the improvements where minimal once a cluster size of three nodes was reached, scaling the number of requests could offer additional insights into the performance of the systems under test. \ \
+
+Additionally, we were not able to collect relevant data on the performance of Acdis.
+The high memory consumption in comparison to Redis and its derivatives suggest room for optimizations in the implementation of the data storage of the application. Future work could experiment with different HashMap implementations or other similar data structures and investigate their memory footprint.
