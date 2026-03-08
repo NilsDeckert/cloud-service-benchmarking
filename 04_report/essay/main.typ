@@ -264,7 +264,7 @@ As a result the operating system stopped the SUT early with an "out-of memory" e
   #image("./images/GCP_Memory_glibc.png")
 ] <fig_gcp_memory_glibc>
 
-To further investigate the memory usage of Acdis, we exchanged the default glibc memory allocator to tikv-jemalloc, which is also used by Redis (*CITATION NEEDED*).
+To further investigate the memory usage of Acdis, we exchanged the default glibc memory allocator to tikv-jemalloc, which is also used by Redis @redisUsingRedisAllocator @RedisRedis2026.
 However, that did not change the behaviour significantly reaching the highest memory usage at $94.7%$ instead of $95.65$.
 As 25% of requests are `DEL` requests, we modified the Acdis source code to shrink the underlying HashMap to the minimum size for every received `DEL` request.
 Again, this did not change the memory usage significantly, leading to the process being killed at $90.8%$ usage.
