@@ -34,7 +34,7 @@
 Key-Value stores are a common part of modern online systems.
 Especially for low-latency systems, in-memory databases allow for faster data accesses than traditional, disk-based applications @rosenscholdNextGenerationCloudnative2025.
 The most prominent example is Redis #footnote[https://redis.io] @akhtarPopularityRankingDatabase2023a @DBEnginesRankingPopularity2026, which is often used for caching @yangLargescaleAnalysisHundreds2021 @HowStackOverflow2019.
-Caused by a change of license in #cite(<redisRedisAdoptsDual>, form: "year"), multiple open-source alternatives emerged. Valkey #footnote[https://valkey.io] and KeyDB #footnote[https://docs.keydb.dev] are forks of the original Redis project which claim to be faster drop-in alternatives. Acdis #footnote[https://github.com/NilsDeckert/acdis] is a case study of the actor model, implementing a minimal Redis-compatible application.
+Caused by a change of license in 2024, multiple open-source alternatives emerged. Valkey #footnote[https://valkey.io] and KeyDB #footnote[https://docs.keydb.dev] are forks of the original Redis project which claim to be faster drop-in alternatives. Acdis #footnote[https://github.com/NilsDeckert/acdis] is a case study of the actor model, implementing a minimal Redis-compatible application.
 
 #linebreak()
 
@@ -45,7 +45,7 @@ This paper aims to provide a comparison between the four open-source key-value s
 == Background
 
 In 2014, Redis was the most popular key-value store.
-In #cite(<redisRedisAdoptsDual>, form: "year"), the license was changed to closed source. This prompted multiple initiatives to fork the key-value store and continue on their own under open-source licenses.
+In 2024, the license was changed to closed source. This prompted multiple initiatives to fork the key-value store and continue on their own under open-source licenses.
 The most popular of these forks is Valkey, which is now backed by the Linux foundation, which in turn is backed by Google, Meta and Microsoft amongst others.
 KeyDB is another fork that claims to be a faster drop-in replacement to Redis. KeyDB is owned by Snap Inc., the company behind Snapchat.
 
