@@ -8,6 +8,7 @@
     We find that Redis features the lowest latency for single-node setups, but has the highest latency of the compared alternatives for all multi-node setups.
     For clusters, the tested applications have comparable latencies, with KeyDB exhibiting the lowest latency for three and four nodes and Valkey having the lowest latency for the tested five-node setups.
     For the tested workload of 60 Million Requests, only minor improvements in latency were observed for clusters larger than three nodes.
+    The memory usage of Acdis led the process to be terminated by the OS before the end of the benchmark.
   ],
   authors: (
     (
@@ -19,7 +20,7 @@
     ),
   ),
   // index-terms: ("Scientific writing", "Typesetting", "Document creation", "Syntax"),
-  bibliography: bibliography("refs.bib"),
+  bibliography: bibliography("CloudServiceBenchmarking.bib", style: "ieee"),
   figure-supplement: [Fig.],
 )
 
@@ -31,7 +32,7 @@
 // Introduction, Methods, Results and Discussion
 = Introduction
 
-Key-Value stores are a common part of modern online systems.
+In-memory Key-Value stores are a common part of modern online systems.
 Especially for low-latency systems, in-memory databases allow for faster data accesses than traditional, disk-based applications @rosenscholdNextGenerationCloudnative2025.
 The most prominent example is Redis #footnote[https://redis.io] @akhtarPopularityRankingDatabase2023a @DBEnginesRankingPopularity2026, which is often used for caching @yangLargescaleAnalysisHundreds2021 @HowStackOverflow2019.
 Caused by a change of license in 2024, multiple open-source alternatives emerged. Valkey #footnote[https://valkey.io] and KeyDB #footnote[https://docs.keydb.dev] are forks of the original Redis project which claim to be faster drop-in alternatives. Acdis #footnote[https://github.com/NilsDeckert/acdis] is a case study of the actor model, implementing a minimal Redis-compatible application.
@@ -44,9 +45,8 @@ This paper aims to provide a comparison between the four open-source key-value s
 
 == Background
 
-In 2014, Redis was the most popular key-value store.
-In 2024, the license was changed to closed source. This prompted multiple initiatives to fork the key-value store and continue on their own under open-source licenses.
-The most popular of these forks is Valkey, which is now backed by the Linux foundation, which in turn is backed by Google, Meta and Microsoft amongst others.
+In 2024, Redis changed their license to the Server Side Public License. This prompted multiple initiatives to fork the key-value store and continue on their own under open-source licenses.
+The most popular of these forks is Valkey @DBEnginesRankingPopularity2026, which is now backed by the Linux foundation, which in turn is backed by Google, Meta and Microsoft amongst others.
 KeyDB is another fork that claims to be a faster drop-in replacement to Redis. KeyDB is owned by Snap Inc., the company behind Snapchat.
 
 == Benchmark Objectives
